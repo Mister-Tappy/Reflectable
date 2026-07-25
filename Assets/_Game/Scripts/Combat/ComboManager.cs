@@ -1,0 +1,1 @@
+namespace Reflectable { public sealed class ComboManager { public int Current{get;private set;} public int Max{get;private set;} public int Add(){Max=System.Math.Max(Max,++Current);return Current;} public void Reset(){Current=0;} } }

@@ -1,0 +1,1 @@
+namespace Reflectable { public sealed class GemManager { public int Amount{get;private set;} public void Add(int n=1){Amount+=n;} public bool Spend(int n){if(Amount<n)return false;Amount-=n;return true;} } }

@@ -1,0 +1,1 @@
+using UnityEngine; using UnityEngine.InputSystem; namespace Reflectable { public sealed class AimController:MonoBehaviour { public Vector2 Direction(Camera c){return ((Vector2)c.ScreenToWorldPoint(Mouse.current.position.ReadValue())-(Vector2)transform.position).normalized;} public bool IsValid(Camera c)=>Direction(c).y>.12f; } }

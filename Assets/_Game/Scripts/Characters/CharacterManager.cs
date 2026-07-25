@@ -1,0 +1,1 @@
+namespace Reflectable { public sealed class CharacterManager { public string Name{get;private set;}="MIMI"; public int Rank{get;private set;}=1; public void Set(string name,int rank){Name=name;Rank=rank;} public int BonusBalls=>Name=="LUNE"?(Rank>=5?3:Rank>=3?2:1):0; public float DamageMultiplier=>Name=="LUNE"?.75f:1f; public float BounceBonus=>Name=="ECHO"?.03f*Rank:0f; } }

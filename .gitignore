@@ -1,0 +1,12 @@
+.agent/
+Library/
+Temp/
+Obj/
+Logs/
+Build/
+Builds/
+*.unitypackage
+*.csproj
+*.sln
+.vscode/
+UserSettings/

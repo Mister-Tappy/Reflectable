@@ -1,0 +1,2 @@
+using System; using System.Collections.Generic;
+namespace Reflectable { public sealed class ProjectileManager { readonly HashSet<ProjectileController> active=new(); public int ActiveCount=>active.Count; public event Action AllCleared; public void Track(ProjectileController p){active.Add(p);p.Expired+=Remove;} void Remove(ProjectileController p){if(active.Remove(p)&&active.Count==0)AllCleared?.Invoke();} } }

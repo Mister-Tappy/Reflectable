@@ -1,0 +1,2 @@
+using UnityEngine;
+namespace Reflectable { public sealed class ScoreManager { public int Score { get; private set; } public int Best => PlayerPrefs.GetInt("ReflectableBest",0); public void Reset(){Score=0;} public void AddHit(int combo){Score+=Mathf.RoundToInt(10f*(1f+Mathf.Min(combo,50)*.02f));} public void AddDestroy(BlockType t){Score+=t==BlockType.Gem?250:t==BlockType.Bomb?150:100;} public void CommitBest(){if(Score>Best){PlayerPrefs.SetInt("ReflectableBest",Score);PlayerPrefs.Save();}} } }

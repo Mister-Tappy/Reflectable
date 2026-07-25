@@ -1,0 +1,22 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.11f1 (3000ef702840) revision 3145967'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Tap Thobpradit" at "2026-07-25T20:45:36.0664721Z"
+OS: 'Windows 11  (10.0.26200) Professional' Language: 'en' Physical Memory: 16221 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-07-25T20:45:36Z
+
+COMMAND LINE ARGUMENTS:
+G:\Unity\UnityEditor\6000.3.11f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+G:\Unity\Reflectable
+-executeMethod
+Reflectable.Editor.SceneFirstSetup.Rebuild
+-logFile
+G:\Unity\Reflectable\scene-rebuild-direct.log
+Successfully changed project path to: G:\Unity\Reflectable
+G:/Unity/Reflectable
+Exiting without the bug reporter. Application will terminate with return code 1

@@ -1,0 +1,1 @@
+using UnityEngine; namespace Reflectable { [System.Serializable] public sealed class PlayerStats { public int MaxHP=100, HP=100; public int Power, Ricochet, ExtraBall, MaxHpLevel; public float Damage=>5f*(1f+Power*.1f); public int BallCount=>1+ExtraBall; public void HealMax(){MaxHP+=15;HP=Mathf.Min(MaxHP,HP+15);} } }

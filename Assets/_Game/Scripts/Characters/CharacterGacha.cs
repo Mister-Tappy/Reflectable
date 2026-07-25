@@ -1,0 +1,1 @@
+using UnityEngine; namespace Reflectable { public sealed class CharacterGacha { public int Cost{get;private set;}=2; public bool Summon(ref int gems,CharacterManager characters){if(gems<Cost)return false;gems-=Cost++;float r=Random.value;int rank=r<.35f?1:r<.65f?2:r<.85f?3:r<.95f?4:5;characters.Set(new[]{"MIMI","ECHO","LUNE"}[Random.Range(0,3)],rank);return true;} } }

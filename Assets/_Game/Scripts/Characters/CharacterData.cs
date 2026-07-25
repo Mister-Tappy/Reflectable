@@ -1,0 +1,1 @@
+using UnityEngine; namespace Reflectable { [CreateAssetMenu(menuName="Reflectable/Character")] public sealed class CharacterData:ScriptableObject { public string DisplayName="MIMI"; public float DamageMultiplier=1; public int BonusBalls; public float BounceBonus; } }

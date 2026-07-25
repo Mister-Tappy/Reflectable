@@ -1,0 +1,1 @@
+using UnityEngine; namespace Reflectable { public sealed class PlayerController:MonoBehaviour { public Transform Weapon; public void Aim(Vector2 d){if(Weapon)Weapon.right=d;} public void Damage(int n){ } } }
