@@ -17,6 +17,10 @@ namespace Reflectable
         bool launched;
         bool exiting;
         Transform visual;
+        TrailRenderer trail;
+        Vector2 lastSamplePosition, lastCollisionNormal;
+        float nextStuckSample, lastCollisionAt;
+        int lastColliderId, repeatedCollisionCount;
 
         void Awake()
         {
@@ -30,8 +34,10 @@ namespace Reflectable
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             body.constraints = RigidbodyConstraints2D.FreezeRotation;
             circle.isTrigger = false;
+            int projectileLayer = LayerMask.NameToLayer("Projectile");
+            if (projectileLayer >= 0) { gameObject.layer = projectileLayer; Physics2D.IgnoreLayerCollision(projectileLayer, projectileLayer, true); }
             visual = transform.Find("Visual");
-            var trail = GetComponent<TrailRenderer>() ?? gameObject.AddComponent<TrailRenderer>();
+            trail = GetComponent<TrailRenderer>() ?? gameObject.AddComponent<TrailRenderer>();
             trail.time = .16f; trail.startWidth = .12f; trail.endWidth = .01f; trail.startColor = new Color(.95f,.78f,1f,.8f); trail.endColor = new Color(.65f,.85f,1f,0f);
         }
 
@@ -44,6 +50,8 @@ namespace Reflectable
             launched = true;
             lastVelocity = direction.normalized * speed;
             body.linearVelocity = lastVelocity;
+            lastSamplePosition = transform.position;
+            nextStuckSample = Time.time + .7f;
             StartCoroutine(VisualPulse(1.22f));
         }
 
@@ -51,8 +59,14 @@ namespace Reflectable
 
         void FixedUpdate()
         {
-            if (launched && body.linearVelocity.sqrMagnitude > .001f)
-                lastVelocity = body.linearVelocity;
+            if (!launched || exiting) return;
+            float age = Time.time - startedAt;
+            float multiplier = age < 5f ? 1f : age < 7f ? 1.15f : age < 9f ? 1.35f : age < 11f ? 1.6f : age < 13f ? 2f : 2.5f;
+            if (game && game.IsFinalProjectile(this) && age > 2f) multiplier = Mathf.Max(multiplier, 1.35f);
+            var direction = body.linearVelocity.sqrMagnitude > .001f ? body.linearVelocity.normalized : lastVelocity.sqrMagnitude > .001f ? lastVelocity.normalized : Vector2.up;
+            lastVelocity = direction * Mathf.Min(speed * multiplier, speed * 2.5f);
+            body.linearVelocity = lastVelocity;
+            if (trail) { trail.time = Mathf.Lerp(.16f, .42f, (multiplier - 1f) / 1.5f); trail.startWidth = Mathf.Lerp(.12f, .2f, (multiplier - 1f) / 1.5f); }
         }
 
         void OnCollisionEnter2D(Collision2D hit)
@@ -68,7 +82,14 @@ namespace Reflectable
             if (block && contactedBlocks.Add(block.GetInstanceID()))
                 game.HitBlock(block, damage);
 
-            Reflect(incoming, GetImpactNormal(hit, incoming));
+            var normal = GetImpactNormal(hit, incoming);
+            Reflect(incoming, normal);
+            lastCollisionNormal = normal;
+            var colliderId = hit.collider.GetInstanceID();
+            repeatedCollisionCount = colliderId == lastColliderId && Time.time - lastCollisionAt < .5f ? repeatedCollisionCount + 1 : 1;
+            lastColliderId = colliderId;
+            lastCollisionAt = Time.time;
+            if (repeatedCollisionCount >= 4) RecoverFromStuck();
             StartCoroutine(VisualPulse(1.16f));
 
             if (!block)
@@ -104,7 +125,8 @@ namespace Reflectable
         void Reflect(Vector2 incoming, Vector2 normal)
         {
             var reflected = Vector2.Reflect(incoming.normalized, normal.normalized).normalized;
-            lastVelocity = reflected * speed;
+            float currentSpeed = body.linearVelocity.sqrMagnitude > .001f ? body.linearVelocity.magnitude : speed;
+            lastVelocity = reflected * currentSpeed;
             body.linearVelocity = lastVelocity;
         }
 
@@ -116,8 +138,35 @@ namespace Reflectable
 
         void Update()
         {
-            if (launched && (transform.position.y < -5.2f || Time.time - startedAt > 20f))
-                Exit();
+            if (launched && !exiting && Time.time >= nextStuckSample)
+            {
+                float moved = Vector2.Distance(transform.position, lastSamplePosition);
+                if (moved < .08f || body.linearVelocity.magnitude < speed * .25f) RecoverFromStuck();
+                lastSamplePosition = transform.position;
+                nextStuckSample = Time.time + .7f;
+            }
+            if (launched && transform.position.y < -5.2f) Exit();
+            else if (launched && Time.time - startedAt > 18f) { Debug.Log("[Projectile] Timeout ID "+GetInstanceID()); ForceResolve(true); }
+        }
+
+        void RecoverFromStuck()
+        {
+            var direction = body.linearVelocity.sqrMagnitude > .001f ? body.linearVelocity.normalized : lastVelocity.sqrMagnitude > .001f ? lastVelocity.normalized : Vector2.up;
+            if (lastCollisionNormal.sqrMagnitude > .01f) body.position += lastCollisionNormal.normalized * .08f;
+            lastVelocity = direction * Mathf.Max(speed, body.linearVelocity.magnitude);
+            body.linearVelocity = lastVelocity;
+            repeatedCollisionCount = 0;
+            Debug.Log("[Projectile] Stuck detected ID " + GetInstanceID());
+            Debug.Log("[Projectile] Recovery applied ID " + GetInstanceID());
+        }
+
+        public void ForceResolve(bool notifyOwner = true)
+        {
+            if (exiting) return;
+            exiting = true;
+            body.simulated = false;
+            if (notifyOwner && game) game.ProjectileFinished(this, transform.position.x);
+            Destroy(gameObject);
         }
 
         void Exit()
@@ -126,8 +175,7 @@ namespace Reflectable
                 return;
             exiting = true;
             body.simulated = false;
-            if (game)
-                game.ProjectileExited();
+            if (game) game.ProjectileFinished(this, transform.position.x);
             Destroy(gameObject);
         }
 
