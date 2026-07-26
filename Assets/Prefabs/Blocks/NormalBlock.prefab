@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6941344425251716586}
   - component: {fileID: 5144398161326332609}
-  - component: {fileID: 1960918657046527880}
+  - component: {fileID: 3575949310982282452}
   m_Layer: 0
   m_Name: NormalBlock
   m_TagString: Untagged
@@ -80,7 +80,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.12, y: 1.18}
   m_EdgeRadius: 0
---- !u!114 &1960918657046527880
+--- !u!114 &3575949310982282452
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
