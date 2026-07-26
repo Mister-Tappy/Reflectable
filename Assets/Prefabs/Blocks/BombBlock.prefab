@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 64484229837647359}
   - component: {fileID: 254614198022219828}
-  - component: {fileID: 7120335413429840661}
+  - component: {fileID: 4204937453758773844}
   m_Layer: 0
   m_Name: BombBlock
   m_TagString: Untagged
@@ -80,7 +80,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.12, y: 1.18}
   m_EdgeRadius: 0
---- !u!114 &7120335413429840661
+--- !u!114 &4204937453758773844
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

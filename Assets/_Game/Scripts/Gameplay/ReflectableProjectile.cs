@@ -16,6 +16,7 @@ namespace Reflectable
         float startedAt;
         bool launched;
         bool exiting;
+        Transform visual;
 
         void Awake()
         {
@@ -29,6 +30,9 @@ namespace Reflectable
             body.interpolation = RigidbodyInterpolation2D.Interpolate;
             body.constraints = RigidbodyConstraints2D.FreezeRotation;
             circle.isTrigger = false;
+            visual = transform.Find("Visual");
+            var trail = GetComponent<TrailRenderer>() ?? gameObject.AddComponent<TrailRenderer>();
+            trail.time = .16f; trail.startWidth = .12f; trail.endWidth = .01f; trail.startColor = new Color(.95f,.78f,1f,.8f); trail.endColor = new Color(.65f,.85f,1f,0f);
         }
 
         public void Launch(ReflectableGameController owner, Vector2 direction, float launchSpeed, int initialDamage)
@@ -40,6 +44,7 @@ namespace Reflectable
             launched = true;
             lastVelocity = direction.normalized * speed;
             body.linearVelocity = lastVelocity;
+            StartCoroutine(VisualPulse(1.22f));
         }
 
         public void AddDamage(int amount) => damage += amount;
@@ -64,6 +69,7 @@ namespace Reflectable
                 game.HitBlock(block, damage);
 
             Reflect(incoming, GetImpactNormal(hit, incoming));
+            StartCoroutine(VisualPulse(1.16f));
 
             if (!block)
                 game.RegisterRicochet(this);
@@ -123,6 +129,15 @@ namespace Reflectable
             if (game)
                 game.ProjectileExited();
             Destroy(gameObject);
+        }
+
+        System.Collections.IEnumerator VisualPulse(float amount)
+        {
+            if (!visual) yield break;
+            var start = visual.localScale;
+            for (float t=0;t<.045f;t+=Time.deltaTime){ if(visual) visual.localScale=Vector3.Lerp(start,start*amount,t/.045f); yield return null; }
+            for (float t=0;t<.07f;t+=Time.deltaTime){ if(visual) visual.localScale=Vector3.Lerp(start*amount,start,t/.07f); yield return null; }
+            if(visual) visual.localScale=start;
         }
     }
 }

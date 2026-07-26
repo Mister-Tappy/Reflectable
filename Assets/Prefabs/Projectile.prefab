@@ -12,8 +12,8 @@ GameObject:
   - component: {fileID: 5211156074461258744}
   - component: {fileID: 3604937334414732902}
   - component: {fileID: 2465680478367744713}
-  - component: {fileID: 1169133397697580799}
-  - component: {fileID: 2788490061242363709}
+  - component: {fileID: 8790447848896227900}
+  - component: {fileID: 6319685810763795068}
   m_Layer: 0
   m_Name: Projectile
   m_TagString: Untagged
@@ -158,7 +158,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.13
---- !u!114 &1169133397697580799
+--- !u!114 &8790447848896227900
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc78fcb4cd3edd941887f47142a43c16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Reflectable.ReflectableProjectile
---- !u!96 &2788490061242363709
+--- !u!96 &6319685810763795068
 TrailRenderer:
   serializedVersion: 4
   m_ObjectHideFlags: 0
