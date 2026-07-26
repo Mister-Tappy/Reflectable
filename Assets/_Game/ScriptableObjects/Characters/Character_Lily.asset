@@ -10,24 +10,25 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28522160d13f433458d1633af2e6a098, type: 3}
-  m_Name: Character_Lune
+  m_Name: Character_Lily
   m_EditorClassIdentifier: Assembly-CSharp::Reflectable.CharacterData
-  characterId: lune
-  displayName: LUNE
-  prefab: {fileID: 750184396430237295, guid: d085d9fbc58533d409ab0f0ca5821f25, type: 3}
+  characterId: lily
+  displayName: LILY
+  prefab: {fileID: 2816057535314412092, guid: 2b80d5befdd08d04c96116481a399286, type: 3}
   portrait: {fileID: 0}
-  description: Multi-ball specialist
-  archetype: 2
-  abilityId: 0
-  abilityDescription: Multi-ball specialist
-  abilityProcChance: 0
-  abilityCooldown: 0
+  description: Light specialist
+  archetype: 3
+  abilityId: 1
+  abilityDescription: "LIGHT CROSS \u2014 Projectile hits can emit fast beams in
+    four directions."
+  abilityProcChance: 0.35
+  abilityCooldown: 0.55
   abilityRange: 3
   abilityBaseDamage: 3
   abilityMaxChainDepth: 1
-  themeColor: {r: 0.96, g: 0.82, b: 0.38, a: 1}
-  damageMultiplier: 0.75
-  extraProjectileCount: 1
+  themeColor: {r: 1, g: 0.93, b: 0.34, a: 1}
+  damageMultiplier: 1
+  extraProjectileCount: 0
   ricochetDamageBonus: 0
   baseRank: 1
   gachaWeight: 1

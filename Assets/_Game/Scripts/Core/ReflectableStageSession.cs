@@ -27,7 +27,7 @@ namespace Reflectable
         }
 
         public static bool IsUnlocked(int stage) => stage <= HighestUnlockedStage;
-        public static int ClearRequirement(int stage) => new[] { 150, 250, 400, 600, 850 }[Mathf.Clamp(stage, 1, 5) - 1];
+        public static int ClearRequirement(int stage) => ReflectableStageConfig.For(stage).BlockTarget;
         public static Presentation GetPresentation(int stage)
         {
             return new[]{

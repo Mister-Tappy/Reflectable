@@ -14,11 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Reflectable.CharacterData
   characterId: mimi
   displayName: MIMI
-  prefab: {fileID: 0}
+  prefab: {fileID: 763988782035728124, guid: dae322481cba7e4468fc28c76cd0a78b, type: 3}
   portrait: {fileID: 0}
-  description: 
+  description: Balanced specialist
   archetype: 0
-  themeColor: {r: 1, g: 1, b: 1, a: 1}
+  abilityId: 0
+  abilityDescription: Balanced specialist
+  abilityProcChance: 0
+  abilityCooldown: 0
+  abilityRange: 3
+  abilityBaseDamage: 3
+  abilityMaxChainDepth: 1
+  themeColor: {r: 0.92, g: 0.55, b: 0.75, a: 1}
   damageMultiplier: 1
   extraProjectileCount: 0
   ricochetDamageBonus: 0

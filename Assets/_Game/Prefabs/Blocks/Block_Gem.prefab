@@ -113,7 +113,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2915843475287455890}
   - component: {fileID: 703713271538118255}
-  - component: {fileID: 5313740174381977599}
+  - component: {fileID: 3211041515858029303}
   m_Layer: 0
   m_Name: Block_Gem
   m_TagString: Untagged
@@ -183,7 +183,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.12, y: 1.18}
   m_EdgeRadius: 0
---- !u!114 &5313740174381977599
+--- !u!114 &3211041515858029303
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

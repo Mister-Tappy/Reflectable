@@ -12,15 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28522160d13f433458d1633af2e6a098, type: 3}
   m_Name: Character_Echo
   m_EditorClassIdentifier: Assembly-CSharp::Reflectable.CharacterData
-  characterId: mimi
-  displayName: MIMI
-  prefab: {fileID: 0}
+  characterId: echo
+  displayName: ECHO
+  prefab: {fileID: 731256643834255358, guid: bc1888b7d47608e4c8f627dfcbbd634a, type: 3}
   portrait: {fileID: 0}
-  description: 
-  archetype: 0
-  themeColor: {r: 1, g: 1, b: 1, a: 1}
+  description: Ricochet specialist
+  archetype: 1
+  abilityId: 0
+  abilityDescription: Ricochet specialist
+  abilityProcChance: 0
+  abilityCooldown: 0
+  abilityRange: 3
+  abilityBaseDamage: 3
+  abilityMaxChainDepth: 1
+  themeColor: {r: 0.45, g: 0.68, b: 0.96, a: 1}
   damageMultiplier: 1
   extraProjectileCount: 0
-  ricochetDamageBonus: 0
+  ricochetDamageBonus: 1
   baseRank: 1
   gachaWeight: 1
