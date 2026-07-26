@@ -113,7 +113,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2915843475287455890}
   - component: {fileID: 703713271538118255}
-  - component: {fileID: 2235522006997942931}
+  - component: {fileID: 5926088220690381448}
   m_Layer: 0
   m_Name: GemBlock
   m_TagString: Untagged
@@ -183,7 +183,7 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 2.12, y: 1.18}
   m_EdgeRadius: 0
---- !u!114 &2235522006997942931
+--- !u!114 &5926088220690381448
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
