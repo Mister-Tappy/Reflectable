@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1e2f30415263748596a7b8c9d0e1f23, type: 3}
+  m_Name: BombBlockData
+  blockType: 6
+  displayName: Bomb Block
+  prefab: {fileID: 1001620828681713870, guid: 7b8e325bd7a43264ebf3ccc30fca65a8, type: 3}
+  sprite: {fileID: 0}
+  material: {fileID: 0}
+  baseTint: {r: 0.98, g: 0.54, b: 0.24, a: 1}
+  hpTextColor: {r: 1, g: 1, b: 1, a: 1}
+  hpTextSize: 42
+  visualScale: {x: 1, y: 1, z: 1}
+  colliderSize: {x: 2.12, y: 1.18}
+  durabilityMultiplier: 1
+  spawnWeight: 1
+  hitEffect: {fileID: 0}
+  destroyEffect: {fileID: 0}

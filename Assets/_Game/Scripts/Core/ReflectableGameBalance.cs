@@ -33,7 +33,8 @@ namespace Reflectable
             var definition = ReflectableStageConfig.For(stage);
             float progress = Mathf.Clamp01(destroyed / (float)definition.BlockTarget);
             float tier = type == ReflectableBlockType.Tough ? 1.35f : type == ReflectableBlockType.Armored ? 1.70f : type == ReflectableBlockType.Elite ? 2.05f : type == ReflectableBlockType.Anchor ? 2.55f : 1f;
-            return Mathf.RoundToInt(definition.NormalHpAt(progress) * tier * Random.Range(.90f, 1.10f));
+            float variation=definition.HpRandomVariation;
+            return Mathf.RoundToInt(definition.NormalHpAt(progress) * tier * Random.Range(1f-variation, 1f+variation));
         }
         public static int BossHp(int stage,int bossNumber,bool finalBoss)
         {

@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
+  m_Name: Stage_05_Forest
+  stageNumber: 5
+  stageName: FOREST
+  difficultyLabel: ADVANCED
+  description: Dense, glowing forest layers.
+  stageVisualPrefab: {fileID: 100100000, guid: 05050505050505050505050505050505, type: 3}
+  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectTint: {r: 0.20, g: 0.61, b: 0.61, a: 1}
+  backgroundGradient:
+    serializedVersion: 2
+    key0: {serializedVersion: 3, time: 0, value: {r: 0.16, g: 0.41, b: 0.33, a: 1}}
+    key1: {serializedVersion: 3, time: 1, value: {r: 0.20, g: 0.61, b: 0.61, a: 1}}
+    ctime0: 0
+    ctime1: 65535
+    atime0: 0
+    atime1: 65535
+    m_Mode: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2
+  clearRequirement: 900
+  bossInterval: 25
+  startingBlockCount: 4
+  earlyBlocksPerTurn: 3
+  lateBlocksPerTurn: 6
+  rewardMultiplier: 2.1
+  normalHpStart: 3700
+  normalHpEnd: 11000
+  hpCurve:
+    serializedVersion: 3
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  hpRandomVariation: 0.1
+  gemChance: 0.08
+  bombChance: 0.06
+  blockPalette: {fileID: 11400000, guid: b0500000000000000000000000000000, type: 2}

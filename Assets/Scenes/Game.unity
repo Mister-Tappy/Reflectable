@@ -4385,6 +4385,7 @@ Transform:
   - {fileID: 592353190}
   - {fileID: 1003037868}
   - {fileID: 1919698963}
+  - {fileID: 2099900002}
   m_Father: {fileID: 1752482131}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1201010423
@@ -6581,6 +6582,7 @@ MonoBehaviour:
   gridOrigin: {fileID: 1003037868}
   blocksRoot: {fileID: 582569178}
   projectilesRoot: {fileID: 1843431263}
+  stageVisualContainer: {fileID: 2099900002}
   aimPreview: {fileID: 1040418129}
   normalBlockPrefab: {fileID: 932871794953925019, guid: da1d25aa1740e7f48aa9f79b27d1f33c, type: 3}
   gemBlockPrefab: {fileID: 1506195891419367867, guid: a59f0070ee061f14e99cfedd063b1dac, type: 3}
@@ -8187,6 +8189,37 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &2099900001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2099900002}
+  m_Layer: 0
+  m_Name: StageVisualContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2099900002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099900001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1184543853}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1935760328
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
+  m_Name: Stage_07_Snowfield
+  stageNumber: 7
+  stageName: SNOWFIELD
+  difficultyLabel: EXPERT
+  description: Frozen landscape and snow-shaped placeholders.
+  stageVisualPrefab: {fileID: 100100000, guid: 07070707070707070707070707070707, type: 3}
+  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectTint: {r: 0.78, g: 0.91, b: 1, a: 1}
+  backgroundGradient:
+    serializedVersion: 2
+    key0: {serializedVersion: 3, time: 0, value: {r: 0.60, g: 0.88, b: 0.98, a: 1}}
+    key1: {serializedVersion: 3, time: 1, value: {r: 0.78, g: 0.91, b: 1, a: 1}}
+    ctime0: 0
+    ctime1: 65535
+    atime0: 0
+    atime1: 65535
+    m_Mode: 0
+    m_NumColorKeys: 2
+    m_NumAlphaKeys: 2
+  clearRequirement: 1500
+  bossInterval: 30
+  startingBlockCount: 5
+  earlyBlocksPerTurn: 3
+  lateBlocksPerTurn: 6
+  rewardMultiplier: 2.9
+  normalHpStart: 12000
+  normalHpEnd: 30000
+  hpCurve:
+    serializedVersion: 3
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  hpRandomVariation: 0.1
+  gemChance: 0.1
+  bombChance: 0.06
+  blockPalette: {fileID: 11400000, guid: b0700000000000000000000000000000, type: 2}

@@ -1,0 +1,10 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1f2031425364758697a8b9c0d1e2f34, type: 3}
+  m_Name: ReflectableBlockVisualCatalog
+  normalBlock: {fileID: 11400000, guid: 11111111111111111111111111111111, type: 2}
+  gemBlock: {fileID: 11400000, guid: 22222222222222222222222222222222, type: 2}
+  bombBlock: {fileID: 11400000, guid: 33333333333333333333333333333333, type: 2}
