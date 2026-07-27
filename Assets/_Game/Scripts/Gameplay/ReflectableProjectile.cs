@@ -55,6 +55,7 @@ namespace Reflectable
             StartCoroutine(VisualPulse(1.22f));
         }
 
+        public int Damage => damage;
         public void AddDamage(int amount) => damage += amount;
 
         void FixedUpdate()

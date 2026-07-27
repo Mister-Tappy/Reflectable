@@ -10,20 +10,6 @@ using UnityEngine.InputSystem.UI;
 
 namespace Reflectable.Editor
 {
-    [InitializeOnLoad]
-    internal static class SceneFirstAutoSetup
-    {
-        static SceneFirstAutoSetup()
-        {
-            EditorApplication.delayCall += () =>
-            {
-                if (SessionState.GetBool("Reflectable.SceneFirstSetupRan.v23", false)) return;
-                SessionState.SetBool("Reflectable.SceneFirstSetupRan.v23", true);
-                SceneFirstSetup.Rebuild();
-            };
-        }
-    }
-
     /// <summary>Editor-only assembly step. It saves editable scenes/prefabs; never runs in play mode.</summary>
     public static class SceneFirstSetup
     {
@@ -99,10 +85,10 @@ namespace Reflectable.Editor
             Set(controller,"feedback",feedback);
             var skipTransform=bottom.Find("SkipTurnButton")??hud.Find("SkipTurnButton");if(skipTransform)skipTransform.SetParent(canvas.transform,false);var skipButton=skipTransform?skipTransform.GetComponent<Button>():Button(canvas.transform,"SkipTurnButton",new Vector2(0,0),"SKIP\nTURN");var skipRect=skipButton.GetComponent<RectTransform>();skipRect.anchorMin=skipRect.anchorMax=new Vector2(1,0);skipRect.pivot=new Vector2(1,0);skipRect.anchoredPosition=new Vector2(-28,28);skipRect.sizeDelta=new Vector2(150,64);Set(controller,"skipTurnButton",skipButton);if(!skipButton.GetComponent<ButtonJuice>())skipButton.gameObject.AddComponent<ButtonJuice>();Hook(skipButton,controller.SkipTurn);
             var pauseButton=Button(canvas.transform,"PauseButton",Vector2.zero,"Ⅱ");var pauseRect=pauseButton.GetComponent<RectTransform>();pauseRect.anchorMin=pauseRect.anchorMax=new Vector2(1,1);pauseRect.pivot=new Vector2(1,1);pauseRect.anchoredPosition=new Vector2(-26,-24);pauseRect.sizeDelta=new Vector2(64,54);pauseButton.GetComponentInChildren<Text>().fontSize=27;Set(controller,"pauseButton",pauseButton);Hook(pauseButton,controller.TogglePause);
-            var powerButton=bottom.Find("PowerButton").GetComponent<Button>();var ricochetButton=bottom.Find("RicochetButton").GetComponent<Button>();var extraBallButton=bottom.Find("ExtraBallButton").GetComponent<Button>();var maxHpButton=bottom.Find("MaxHPButton").GetComponent<Button>();var characterButton=bottom.Find("CharacterButton").GetComponent<Button>();
-            Hook(powerButton,controller,"Power");Hook(ricochetButton,controller,"Ricochet");Hook(extraBallButton,controller,"Extra Ball");Hook(maxHpButton,controller,"Max HP");Hook(characterButton,controller.OpenCharacterPanel);
-            var buttonNames=new[]{"PowerButton","RicochetButton","ExtraBallButton","MaxHPButton","CharacterButton"}; for(int i=0;i<buttonNames.Length;i++){var button=bottom.Find(buttonNames[i]);if(!button.GetComponent<ButtonJuice>())button.gameObject.AddComponent<ButtonJuice>();var rect=button.GetComponent<RectTransform>();rect.anchoredPosition=new Vector2(-380+i*190,-465);rect.sizeDelta=new Vector2(175,72);var label=button.GetComponentInChildren<Text>();if(label)label.fontSize=16;}
-            Set(controller,"powerButton",powerButton);Set(controller,"ricochetButton",ricochetButton);Set(controller,"extraBallButton",extraBallButton);Set(controller,"maxHpButton",maxHpButton);Set(controller,"characterButton",characterButton);
+            var oldMaxHp=bottom.Find("MaxHPButton");if(oldMaxHp)Object.DestroyImmediate(oldMaxHp.gameObject);var powerButton=bottom.Find("PowerButton").GetComponent<Button>();var ricochetButton=bottom.Find("RicochetButton").GetComponent<Button>();var extraBallButton=bottom.Find("ExtraBallButton").GetComponent<Button>();var characterButton=bottom.Find("CharacterButton").GetComponent<Button>();
+            Hook(powerButton,controller,"Power");Hook(ricochetButton,controller,"Ricochet");Hook(extraBallButton,controller,"Extra Ball");Hook(characterButton,controller.OpenCharacterPanel);
+            var buttonNames=new[]{"PowerButton","RicochetButton","ExtraBallButton","CharacterButton"}; for(int i=0;i<buttonNames.Length;i++){var button=bottom.Find(buttonNames[i]);if(!button.GetComponent<ButtonJuice>())button.gameObject.AddComponent<ButtonJuice>();var rect=button.GetComponent<RectTransform>();rect.anchoredPosition=new Vector2(-300+i*200,-465);rect.sizeDelta=new Vector2(190,72);var label=button.GetComponentInChildren<Text>();if(label)label.fontSize=16;}
+            Set(controller,"powerButton",powerButton);Set(controller,"ricochetButton",ricochetButton);Set(controller,"extraBallButton",extraBallButton);Set(controller,"characterButton",characterButton);
             SetFloat(controller,"left",-9.28f);SetFloat(controller,"right",9.28f);SetFloat(controller,"ceiling",5.28f);SetFloat(controller,"bottom",-4.9f);SetVector2(controller,"cellSpacing",new Vector2(2.42f,1.32f));
             Hook(over.transform.Find("RetryButton").GetComponent<Button>(), controller.Retry); Hook(over.transform.Find("MenuButton").GetComponent<Button>(), controller.MainMenu);
             Hook(pause.transform.Find("Window/ResumeButton").GetComponent<Button>(), controller.ResumeGame);Hook(pause.transform.Find("Window/SettingsButton").GetComponent<Button>(), controller.OpenPauseSettings);Hook(pause.transform.Find("Window/MenuButton").GetComponent<Button>(), controller.RequestMainMenu);Hook(pauseSettings.transform.Find("Window/BackButton").GetComponent<Button>(),controller.ClosePauseSettings);Hook(menuConfirm.transform.Find("Window/CancelButton").GetComponent<Button>(),controller.CancelMainMenu);Hook(menuConfirm.transform.Find("Window/ConfirmButton").GetComponent<Button>(),controller.ConfirmMainMenu);

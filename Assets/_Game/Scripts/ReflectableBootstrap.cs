@@ -84,8 +84,7 @@ namespace Reflectable
         {
             { "POWER", 0 },
             { "RICOCHET", 0 },
-            { "EXTRA BALL", 0 },
-            { "MAX HP", 0 }
+            { "EXTRA BALL", 0 }
         };
 
         private bool aiming;
@@ -305,11 +304,6 @@ namespace Reflectable
         public void UpgradeExtraBall()
         {
             Upgrade("EXTRA BALL");
-        }
-
-        public void UpgradeMaxHp()
-        {
-            Upgrade("MAX HP");
         }
 
         public void CharacterDraw()
@@ -814,12 +808,6 @@ namespace Reflectable
 
             sp -= cost;
             skills[name]++;
-
-            if (name == "MAX HP")
-            {
-                maxHp += 15;
-                hp = Mathf.Min(maxHp, hp + 15);
-            }
 
             RefreshHud();
         }

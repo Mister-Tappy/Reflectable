@@ -11,20 +11,6 @@ using UnityEngine.UI;
 
 namespace Reflectable.Editor
 {
-    [InitializeOnLoad]
-    internal static class ReflectableAutoBuilder
-    {
-        static ReflectableAutoBuilder()
-        {
-            EditorApplication.delayCall += () =>
-            {
-                if (SessionState.GetBool("Reflectable.SceneBuilderRan", false)) return;
-                SessionState.SetBool("Reflectable.SceneBuilderRan", true);
-                ReflectableProjectBuilder.Build();
-            };
-        }
-    }
-
     public static class ReflectableProjectBuilder
     {
         const string Root="Assets/_Game", Scenes=Root+"/Scenes", Prefabs=Root+"/Prefabs";
@@ -35,7 +21,6 @@ namespace Reflectable.Editor
         {
             EnsureFolders(); sprite=AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd"); font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             BuildPrefabs(); BuildMainMenu(); BuildGame();
-            EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scenes+"/MainMenu.unity",true),new EditorBuildSettingsScene(Scenes+"/Game.unity",true)};
             AssetDatabase.SaveAssets(); AssetDatabase.Refresh(); Debug.Log("REFLECTABLE: scenes and prefabs assembled.");
         }
         static void EnsureFolders(){foreach(var p in new[]{Root,Scenes,Prefabs,Prefabs+"/Blocks",Prefabs+"/Projectiles",Prefabs+"/Characters"})if(!AssetDatabase.IsValidFolder(p)){var parent=Path.GetDirectoryName(p).Replace('\\','/');AssetDatabase.CreateFolder(parent,Path.GetFileName(p));}}
@@ -64,7 +49,7 @@ namespace Reflectable.Editor
             var arena=Go("Arena",root.transform); foreach(var a in new[]{("TopWall",new Vector2(0,5.4f),new Vector2(14.6f,.25f)),("LeftWall",new Vector2(-7.2f,0),new Vector2(.25f,11.5f)),("RightWall",new Vector2(7.2f,0),new Vector2(.25f,11.5f))}){var w=Go(a.Item1,arena.transform);w.transform.position=a.Item2;Sprite(w,Lavender,a.Item3);w.AddComponent<BoxCollider2D>();}var kill=Go("BottomKillZone",arena.transform);kill.transform.position=new Vector2(0,-5.5f);var kc=kill.AddComponent<BoxCollider2D>();kc.size=new Vector2(14,.2f);kc.isTrigger=true;var danger=Go("DangerZone",arena.transform);danger.transform.position=new Vector2(0,-4.2f);Sprite(danger,Pink,new Vector2(13,.08f));Go("GridRoot",arena.transform);Go("ProjectileRoot",arena.transform);Go("VFXRoot",arena.transform);arena.SetActive(false);
             var player=Go("Player",root.transform);player.transform.position=new Vector2(0,-4.65f);var visual=Go("Visual",player.transform);Sprite(Go("Body",visual.transform),Pink,new Vector2(.85f,.7f));var head=Go("Head",visual.transform);head.transform.localPosition=new Vector3(0,.5f);Sprite(head,Blue,new Vector2(1.1f,.9f));foreach(float x in new[]{-.18f,.18f}){var eye=Go("Eye",head.transform);eye.transform.localPosition=new Vector3(x,0);Sprite(eye,Ink,Vector2.one*.1f);}var weapon=Go("Weapon",visual.transform);weapon.transform.localPosition=new Vector3(.55f,.25f);Sprite(weapon,Purple,new Vector2(.55f,.12f));var fire=Go("FirePoint",player.transform);fire.transform.localPosition=new Vector3(.72f,.25f);player.AddComponent<PlayerController>();player.AddComponent<AimController>();player.SetActive(false);
             var managers=Go("Managers",root.transform);foreach(var n in new[]{"GameManager","TurnManager","BlockManager","ProjectileManager","ComboManager","ScoreManager","ExperienceManager","CharacterManager","GemManager","SaveManager"})Go(n,managers.transform);managers.transform.Find("GameManager").gameObject.AddComponent<GameManager>();
-            var canvas=CanvasRoot();var top=Go("TopHUD",canvas);Text("HP",top.transform,"HP 100 / 100",new Vector2(-760,470),new Vector2(300,50),27);Text("Turn",top.transform,"TURN 1",new Vector2(-100,470),new Vector2(230,50),27);Text("Score",top.transform,"SCORE 0",new Vector2(180,470),new Vector2(250,50),27);Text("Gems",top.transform,"GEM 0",new Vector2(760,470),new Vector2(220,50),27);Text("ComboText",canvas,"",new Vector2(0,330),new Vector2(600,70),40);var bottom=Go("BottomHUD",canvas);Text("Level",bottom.transform,"LV 1",new Vector2(-760,-465),new Vector2(120,40),22);Text("EXPBar",bottom.transform,"EXP 0 / 40",new Vector2(-620,-465),new Vector2(220,40),22);Text("SkillPoints",bottom.transform,"SP 0",new Vector2(-420,-465),new Vector2(120,40),22);foreach(var n in new[]{"PowerButton","RicochetButton","ExtraBallButton","MaxHPButton","CharacterButton"})Button(n,bottom.transform,new Vector2(-120+Array.IndexOf(new[]{"PowerButton","RicochetButton","ExtraBallButton","MaxHPButton","CharacterButton"},n)*180,-465));foreach(var n in new[]{"CharacterDrawPanel","PausePanel","GameOverPanel"}){var p=Go(n,canvas);p.SetActive(false);}canvas.gameObject.SetActive(false);
+            var canvas=CanvasRoot();var top=Go("TopHUD",canvas);Text("HP",top.transform,"HP 100 / 100",new Vector2(-760,470),new Vector2(300,50),27);Text("Turn",top.transform,"TURN 1",new Vector2(-100,470),new Vector2(230,50),27);Text("Score",top.transform,"SCORE 0",new Vector2(180,470),new Vector2(250,50),27);Text("Gems",top.transform,"GEM 0",new Vector2(760,470),new Vector2(220,50),27);Text("ComboText",canvas,"",new Vector2(0,330),new Vector2(600,70),40);var bottom=Go("BottomHUD",canvas);Text("Level",bottom.transform,"LV 1",new Vector2(-760,-465),new Vector2(120,40),22);Text("EXPBar",bottom.transform,"EXP 0 / 40",new Vector2(-620,-465),new Vector2(220,40),22);Text("SkillPoints",bottom.transform,"SP 0",new Vector2(-420,-465),new Vector2(120,40),22);foreach(var n in new[]{"PowerButton","RicochetButton","ExtraBallButton","CharacterButton"})Button(n,bottom.transform,new Vector2(-120+Array.IndexOf(new[]{"PowerButton","RicochetButton","ExtraBallButton","CharacterButton"},n)*180,-465));foreach(var n in new[]{"CharacterDrawPanel","PausePanel","GameOverPanel"}){var p=Go(n,canvas);p.SetActive(false);}canvas.gameObject.SetActive(false);
             EditorSceneManager.SaveScene(scene,Scenes+"/Game.unity");
         }
         static void BuildPrefabs()
