@@ -9,7 +9,7 @@ MonoBehaviour:
   stageName: SKY ISLANDS
   difficultyLabel: EXPERT
   description: Floating layers and airy distant islands.
-  stageVisualPrefab: {fileID: 100100000, guid: 09090909090909090909090909090909, type: 3}
+  stageVisualPrefab: {fileID: 4336709373949929926, guid: 09090909090909090909090909090909, type: 3}
   stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   stageSelectTint: {r: 0.51, g: 0.87, b: 0.98, a: 1}
   backgroundGradient:

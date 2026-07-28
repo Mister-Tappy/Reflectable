@@ -26,6 +26,8 @@ MonoBehaviour:
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 0.95, g: 0.28, b: 0.2, a: 1}
+  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerBackground: {fileID: 0}
   fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1

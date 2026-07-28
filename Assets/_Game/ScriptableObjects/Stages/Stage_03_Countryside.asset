@@ -9,7 +9,7 @@ MonoBehaviour:
   stageName: COUNTRYSIDE
   difficultyLabel: NORMAL
   description: Warm fields and rural landmark placeholders.
-  stageVisualPrefab: {fileID: 100100000, guid: 03030303030303030303030303030303, type: 3}
+  stageVisualPrefab: {fileID: 578614055661023698, guid: 03030303030303030303030303030303, type: 3}
   stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   stageSelectTint: {r: 0.52, g: 0.78, b: 0.94, a: 1}
   backgroundGradient:

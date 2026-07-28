@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Reflectable
@@ -7,37 +5,43 @@ namespace Reflectable
     public static class CharacterProgression
     {
         public const string StarterId = "marina";
-        const string EquippedKey = "Reflectable.EquippedCharacter";
-        const string UnlockedKey = "Reflectable.UnlockedCharacters";
-        const string LevelPrefix = "Reflectable.CharacterLevel.";
+        const string ActiveCharacterKey = "Reflectable.ActiveCharacter";
+        const string ActiveLevelKey = "Reflectable.ActiveCharacterLevel";
+        const string LegacyEquippedKey = "Reflectable.EquippedCharacter";
+        const string LegacyUnlockedKey = "Reflectable.UnlockedCharacters";
 
-        static HashSet<string> ReadUnlocked()
+        public static void MigrateLegacyData()
         {
-            var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { StarterId };
-            foreach (var value in PlayerPrefs.GetString(UnlockedKey, StarterId).Split(';'))
-                if (!string.IsNullOrWhiteSpace(value)) result.Add(value.Trim().ToLowerInvariant());
-            return result;
-        }
-
-        public static IReadOnlyCollection<string> UnlockedCharacters => ReadUnlocked();
-        public static bool IsUnlocked(string id) => !string.IsNullOrWhiteSpace(id) && ReadUnlocked().Contains(id);
-
-        public static void Unlock(string id)
-        {
-            if (string.IsNullOrWhiteSpace(id)) return;
-            var unlocked = ReadUnlocked();
-            unlocked.Add(id.ToLowerInvariant());
-            PlayerPrefs.SetString(UnlockedKey, string.Join(";", unlocked));
+            if (!PlayerPrefs.HasKey(ActiveCharacterKey))
+                PlayerPrefs.SetString(ActiveCharacterKey, PlayerPrefs.GetString(LegacyEquippedKey, StarterId).ToLowerInvariant());
+            PlayerPrefs.DeleteKey(LegacyEquippedKey);
+            PlayerPrefs.DeleteKey(LegacyUnlockedKey);
             PlayerPrefs.Save();
         }
 
-        public static string EquippedCharacter
+        public static string ActiveCharacterId
         {
-            get { var id = PlayerPrefs.GetString(EquippedKey, StarterId).ToLowerInvariant(); return IsUnlocked(id) ? id : StarterId; }
-            set { var id = string.IsNullOrWhiteSpace(value) ? StarterId : value.ToLowerInvariant(); if (!IsUnlocked(id)) return; PlayerPrefs.SetString(EquippedKey, id); PlayerPrefs.Save(); }
+            get
+            {
+                MigrateLegacyData();
+                string id = PlayerPrefs.GetString(ActiveCharacterKey, StarterId);
+                return string.IsNullOrWhiteSpace(id) ? StarterId : id.ToLowerInvariant();
+            }
         }
 
-        public static int GetLevel(string id, int fallback = 1) => Mathf.Max(1, PlayerPrefs.GetInt(LevelPrefix + id.ToLowerInvariant(), fallback));
-        public static void SetLevel(string id, int level) { PlayerPrefs.SetInt(LevelPrefix + id.ToLowerInvariant(), Mathf.Max(1, level)); PlayerPrefs.Save(); }
+        public static int ActiveCharacterLevel
+        {
+            get => Mathf.Max(1, PlayerPrefs.GetInt(ActiveLevelKey, 1));
+        }
+
+        public static void SetActiveCharacter(string id, int level)
+        {
+            string resolved = string.IsNullOrWhiteSpace(id) ? StarterId : id.ToLowerInvariant();
+            PlayerPrefs.SetString(ActiveCharacterKey, resolved);
+            PlayerPrefs.SetInt(ActiveLevelKey, Mathf.Max(1, level));
+            PlayerPrefs.DeleteKey(LegacyEquippedKey);
+            PlayerPrefs.DeleteKey(LegacyUnlockedKey);
+            PlayerPrefs.Save();
+        }
     }
 }

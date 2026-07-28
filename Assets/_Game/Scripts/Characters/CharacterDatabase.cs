@@ -23,5 +23,11 @@ namespace Reflectable
             }
             return Default;
         }
+
+        public CharacterData RandomCharacter()
+        {
+            var valid = characters.FindAll(entry => entry != null);
+            return valid.Count > 0 ? valid[Random.Range(0, valid.Count)] : null;
+        }
     }
 }

@@ -9,7 +9,7 @@ MonoBehaviour:
   stageName: COAST
   difficultyLabel: NORMAL
   description: Bright beaches, waves, and small island silhouettes.
-  stageVisualPrefab: {fileID: 100100000, guid: 02020202020202020202020202020202, type: 3}
+  stageVisualPrefab: {fileID: 7440787995517223581, guid: 02020202020202020202020202020202, type: 3}
   stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   stageSelectTint: {r: 0.45, g: 0.80, b: 0.96, a: 1}
   backgroundGradient:

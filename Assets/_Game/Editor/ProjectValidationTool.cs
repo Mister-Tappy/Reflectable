@@ -202,6 +202,14 @@ namespace Reflectable.Editor
                             Error(path + ": invalid or duplicate stage number.");
                         if (!data.stageVisualPrefab || !data.stageSelectPreview)
                             Error(path + ": missing saved stage visual prefab or stage-select preview.");
+                        else
+                        {
+                            string visualPath = AssetDatabase.GetAssetPath(data.stageVisualPrefab);
+                            if (string.IsNullOrWhiteSpace(visualPath) ||
+                                !visualPath.EndsWith(".prefab", StringComparison.OrdinalIgnoreCase) ||
+                                !PrefabUtility.IsPartOfPrefabAsset(data.stageVisualPrefab))
+                                Error(path + ": stage visual reference does not resolve to a valid prefab GameObject.");
+                        }
                     }
                 }
             }

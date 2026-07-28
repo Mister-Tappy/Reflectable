@@ -132,7 +132,7 @@ namespace Reflectable
             lastColliderId = colliderId;
             lastCollisionAt = Time.time;
             if (repeatedCollisionCount >= 4) RecoverFromStuck();
-            StartCoroutine(VisualPulse(1.16f));
+            if (!block) StartCoroutine(VisualPulse(1.16f));
 
             if (!block)
                 game.RegisterRicochet(this);
@@ -228,6 +228,12 @@ namespace Reflectable
             SetComboRenderer(comboGlow, true, WithAlpha(tier.primaryColor,.24f+comboVisualStage*.045f), .62f+comboVisualStage*.06f);
             SetComboRenderer(comboRing, comboVisualStage>=3, WithAlpha(tier.secondaryColor,.45f), .72f+comboVisualStage*.055f);
             SetComboRenderer(comboLightning, comboVisualStage>=4, WithAlpha(Color.Lerp(tier.secondaryColor,new Color(.75f,.3f,1f),.6f),.55f), .84f+comboVisualStage*.06f);
+        }
+
+        public void PulseComboHit(float amount)
+        {
+            if (!isActiveAndEnabled) return;
+            StartCoroutine(VisualPulse(Mathf.Clamp(amount, 1.02f, 1.2f)));
         }
 
         public void ResetComboVisual()

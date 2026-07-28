@@ -25,6 +25,8 @@ namespace Reflectable
         public Sprite sideSprite;
         public Sprite backSprite;
         public Color themeColor = Color.white;
+        public Sprite bannerArtwork;
+        public Sprite bannerBackground;
 
         [Header("Combo Presentation (Optional)")]
         public Sprite fullBodyCutIn;

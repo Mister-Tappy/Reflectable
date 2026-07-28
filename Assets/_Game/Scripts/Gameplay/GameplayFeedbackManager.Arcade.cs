@@ -67,6 +67,8 @@ namespace Reflectable
         float fireTimer;
         float ambientTimer;
         float characterSparkTimer;
+        float nextImpactShakeTime;
+        float queuedImpactShake;
         bool arcadeInitialized;
         ArcadeEffectQuality? previewQuality;
 
@@ -151,22 +153,39 @@ namespace Reflectable
                 PunchArcadeCombo(currentCombo);
             }
             ApplyProjectileEvolution();
-            if (comboOrb && comboOrb.IsSummoned)
+            if (comboOrb && !comboOrb.IsSummoned)
+                comboOrb.BeginCombo(position, currentCombo);
+            else if (comboOrb && comboOrb.IsSummoned)
             {
                 ComboTierSettings orbTier = comboPresentation && comboPresentation.Config
                     ? comboPresentation.Config.TierFor(currentCombo)
                     : default;
                 comboOrb.SetCombo(currentCombo);
-                Shockwave(comboOrb.WorldPosition, orbTier.secondaryColor, .22f + ComboIntensity(currentCombo) * .18f);
-                EmitSparks(comboOrb.WorldPosition, orbTier.primaryColor, QualityCount(2 + Mathf.Min(4, currentCombo / 150)), 1.15f);
+                if (comboOrb.IsOrbFormed)
+                {
+                    Shockwave(comboOrb.WorldPosition, orbTier.secondaryColor, .18f + ComboIntensity(currentCombo) * .14f);
+                    EmitSparks(comboOrb.WorldPosition, orbTier.primaryColor, QualityCount(1 + Mathf.Min(3, currentCombo / 180)), 1.05f);
+                }
             }
             worldReaction?.SetCombo(currentCombo);
 
+            ComboPresentationConfig feedbackConfig = comboPresentation ? comboPresentation.Config : null;
             Color hitColor = HitColor(kind, critical);
-            if (!critical && kind == ArcadeHitKind.Direct && comboPresentation && comboPresentation.Config)
-                hitColor = currentCombo >= 1000 ? RainbowColor(Time.unscaledTime) : comboPresentation.Config.TierFor(currentCombo).primaryColor;
-            EmitImpact(position, hitColor, critical || destroyed, kind);
+            if (!critical && kind == ArcadeHitKind.Direct && feedbackConfig)
+                hitColor = currentCombo >= 1000 ? RainbowColor(Time.unscaledTime) : feedbackConfig.TierFor(currentCombo).primaryColor;
+            EmitImpact(
+                position,
+                hitColor,
+                critical || destroyed,
+                kind,
+                feedbackConfig ? feedbackConfig.impactSparkAmount : 8,
+                feedbackConfig ? feedbackConfig.hitShockwaveScale : .36f);
             if (damage > 0) Popup(position, damage, hitColor, critical, kind);
+            PulseNearestProjectile(position, feedbackConfig ? feedbackConfig.projectileHitPulseScale : 1.08f);
+            RequestImpactShake(
+                feedbackConfig ? feedbackConfig.TierFor(currentCombo).cameraShake : .006f,
+                feedbackConfig ? feedbackConfig.hitShakeDuration : .055f,
+                feedbackConfig ? feedbackConfig.hitShakeCooldown : .045f);
 
             float intensity = ComboIntensity(currentCombo);
             ComboMilestoneSettings milestone = default;
@@ -179,7 +198,8 @@ namespace Reflectable
             PlayConfiguredAudio(critical, destroyed, milestoneHit, milestoneHit && currentCombo >= 1000);
             if (milestoneHit && milestone.characterCutIn) PlayCharacterVoice(currentCombo);
             if (milestoneHit && milestone.cameraShake > 0f) Shake(milestone.cameraShake, .09f);
-            Flash(hitColor, Mathf.Lerp(.025f, .13f, intensity) * (critical || destroyed ? 1.7f : 1f));
+            float baseFlash = feedbackConfig ? feedbackConfig.impactFlashStrength : .045f;
+            Flash(hitColor, Mathf.Lerp(baseFlash, baseFlash * 2.4f, intensity) * (critical || destroyed ? 1.55f : 1f));
             if (milestoneHit && milestone.hitStop > 0f) HitStop(milestone.hitStop, false);
             if (!comboPresentation) CheckAnnouncement(currentCombo);
             CheckVoiceCue(currentCombo);
@@ -191,9 +211,10 @@ namespace Reflectable
             ComboPresentationConfig config = comboPresentation ? comboPresentation.Config : null;
             ComboTierSettings tier = config ? config.TierFor(combo) : default;
             Color color = config ? tier.primaryColor : HitColor(kind, false);
-            if (comboOrb && !comboOrb.IsSummoned)
+            if (comboOrb && (!comboOrb.IsSummoned || !comboOrb.IsOrbFormed))
             {
-                comboOrb.Summon(position, combo);
+                if (!comboOrb.IsSummoned) comboOrb.BeginCombo(position, combo);
+                comboOrb.FormOrb(position, combo);
                 int formationCount = QualityCount(config ? Mathf.Clamp(tier.particleCount + 6, 10, 28) : 12);
                 float formationDuration = config ? config.orbFormationDuration : .32f;
                 for (int i = 0; i < formationCount; i++)
@@ -295,6 +316,35 @@ namespace Reflectable
         {
             if (shake != null) StopCoroutine(shake);
             shake = StartCoroutine(ShakeRoutine(Mathf.Min(.28f, strength), duration));
+        }
+
+        void RequestImpactShake(float strength, float duration, float cooldown)
+        {
+            if (strength <= 0f) return;
+            if (Time.unscaledTime < nextImpactShakeTime)
+            {
+                queuedImpactShake = Mathf.Max(queuedImpactShake, strength);
+                return;
+            }
+            float blended = Mathf.Max(strength, queuedImpactShake * .72f);
+            queuedImpactShake = 0f;
+            nextImpactShakeTime = Time.unscaledTime + Mathf.Max(.02f, cooldown);
+            StartArcadeShake(blended, Mathf.Clamp(duration, .04f, .07f));
+        }
+
+        void PulseNearestProjectile(Vector3 position, float amount)
+        {
+            ReflectableProjectile nearest = null;
+            float nearestDistance = float.MaxValue;
+            activeProjectiles.RemoveWhere(item => !item);
+            foreach (ReflectableProjectile projectile in activeProjectiles)
+            {
+                float distance = (projectile.transform.position - position).sqrMagnitude;
+                if (distance >= nearestDistance) continue;
+                nearestDistance = distance;
+                nearest = projectile;
+            }
+            nearest?.PulseComboHit(amount);
         }
 
         void BuildRuntimeAssets()
@@ -618,9 +668,9 @@ namespace Reflectable
             foreach (var ghost in comboGhosts) if (ghost) ghost.color = Color.clear;
         }
 
-        void EmitImpact(Vector3 position, Color color, bool heavy, ArcadeHitKind kind)
+        void EmitImpact(Vector3 position, Color color, bool heavy, ArcadeHitKind kind, int baseSparkAmount, float baseShockwaveScale)
         {
-            int count = heavy ? 22 : 9;
+            int count = heavy ? Mathf.Max(baseSparkAmount + 8, 14) : Mathf.Max(2, baseSparkAmount);
             if (kind == ArcadeHitKind.Explosion) count += 18;
             EmitSparks(position, color, count, heavy ? 5.5f : 3.4f);
             int fragmentCount = EffectQuality == ArcadeEffectQuality.Low ? (heavy ? 4 : 1) : EffectQuality == ArcadeEffectQuality.Medium ? (heavy ? 8 : 3) : (heavy ? 12 : 5);
@@ -636,7 +686,7 @@ namespace Reflectable
                     Random.Range(.25f, .55f),
                     false);
             }
-            Shockwave(position, color, heavy ? .8f : .42f);
+            Shockwave(position, color, heavy ? Mathf.Max(.68f, baseShockwaveScale * 1.8f) : baseShockwaveScale);
         }
 
         void EmitSparks(Vector3 position, Color color, int count, float speed)

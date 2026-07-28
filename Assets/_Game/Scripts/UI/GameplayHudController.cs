@@ -23,6 +23,7 @@ namespace Reflectable
         [SerializeField] TMP_Text characterName;
         [SerializeField] TMP_Text characterLevel;
         [SerializeField] TMP_Text skillPointsText;
+        [SerializeField] TMP_Text passiveName;
         [Header("Actions")]
         [SerializeField] HudUpgradeCard powerCard;
         [SerializeField] HudUpgradeCard ricochetCard;
@@ -87,6 +88,8 @@ namespace Reflectable
                 }
                 if (portraitGlow) portraitGlow.color = new Color(character.themeColor.r, character.themeColor.g, character.themeColor.b, .32f);
                 if (characterName) characterName.text = character.displayName.ToUpperInvariant();
+                if (passiveName) passiveName.text = character.CutInAbilityName.ToUpperInvariant();
+                AnimatePortraitReplacement();
             }
             if (characterLevel) characterLevel.SetText("Lv.{0}", level);
             powerCard?.Refresh("POWER", power, power * 15, true, powerCost, canUpgrade && skillPoints >= powerCost);
@@ -131,6 +134,13 @@ namespace Reflectable
             portraitPulse = StartCoroutine(PortraitRoutine());
         }
 
+        public void AnimatePortraitReplacement()
+        {
+            if (!portrait || !isActiveAndEnabled) return;
+            if (portraitPulse != null) StopCoroutine(portraitPulse);
+            portraitPulse = StartCoroutine(PortraitReplacementRoutine());
+        }
+
         void PulseProgress()
         {
             if (!isActiveAndEnabled) return;
@@ -164,6 +174,39 @@ namespace Reflectable
                 yield return null;
             }
             rect.localScale = Vector3.one;
+            portraitPulse = null;
+        }
+
+        IEnumerator PortraitReplacementRoutine()
+        {
+            RectTransform rect = portrait.rectTransform;
+            Vector2 start = rect.anchoredPosition;
+            if (passiveName) passiveName.alpha = 0f;
+            portrait.canvasRenderer.SetAlpha(0f);
+            portrait.CrossFadeAlpha(1f, .22f, true);
+            if (portraitGlow)
+            {
+                Color glow = portraitGlow.color;
+                glow.a = .85f;
+                portraitGlow.color = glow;
+            }
+            for (float time = 0f; time < .28f; time += Time.unscaledDeltaTime)
+            {
+                float progress = Mathf.Clamp01(time / .28f);
+                rect.anchoredPosition = Vector2.Lerp(start + Vector2.left * 22f, start, 1f - Mathf.Pow(1f - progress, 3f));
+                rect.localScale = Vector3.one * Mathf.Lerp(.88f, 1f, 1f - Mathf.Pow(1f - progress, 3f));
+                if (passiveName) passiveName.alpha = Mathf.Clamp01(progress * 2f);
+                yield return null;
+            }
+            rect.anchoredPosition = start;
+            rect.localScale = Vector3.one;
+            if (passiveName) passiveName.alpha = 1f;
+            if (portraitGlow)
+            {
+                Color glow = portraitGlow.color;
+                glow.a = .32f;
+                portraitGlow.color = glow;
+            }
             portraitPulse = null;
         }
     }

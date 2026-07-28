@@ -30,11 +30,13 @@ namespace Reflectable
         int evolutionStage;
         float orbPulse = 1f;
         bool forming;
+        bool orbFormed;
         Color targetNumberColor = Color.white;
         Color displayedNumberColor = Color.white;
         float displayAlpha = 1f;
 
         public bool IsSummoned => gameObject.activeSelf;
+        public bool IsOrbFormed => orbFormed;
         public Vector3 WorldPosition => transform.position;
 
         public void Initialize(ComboPresentationConfig value, Sprite circle, Sprite ringSprite, Material material, Font font)
@@ -65,18 +67,34 @@ namespace Reflectable
         public void Summon(Vector3 position, int value)
         {
             Debug.Log("[Combo Orb] Summon " + value + " at " + position, this);
+            BeginCombo(position, value);
+            FormOrb(position, value);
+        }
+
+        public void BeginCombo(Vector3 position, int value)
+        {
             if (despawnRoutine != null) { StopCoroutine(despawnRoutine); despawnRoutine = null; }
             anchor = position;
             transform.position = anchor;
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
             if (visualRoot) visualRoot.localScale = Vector3.zero;
+            orbFormed = false;
             if (comboDisplayRoot)
             {
-                comboDisplayRoot.localScale = Vector3.one * .84f;
+                comboDisplayRoot.localScale = Vector3.one;
                 comboDisplayRoot.gameObject.SetActive(true);
             }
             gameObject.SetActive(true);
+            SetDisplayAlpha(1f);
+            SetCombo(value);
+        }
+
+        public void FormOrb(Vector3 position, int value)
+        {
+            if (!IsSummoned) BeginCombo(position, value);
+            if (orbFormed || forming) return;
+            orbFormed = true;
             SetCombo(value, true);
             if (summonRoutine != null) StopCoroutine(summonRoutine);
             summonRoutine = StartCoroutine(SummonRoutine());
@@ -138,7 +156,7 @@ namespace Reflectable
             float hover = Mathf.Sin(time * config.orbHoverSpeed) * config.orbHoverAmount;
             float drift = Mathf.Sin(time * config.orbHoverSpeed * .63f) * config.orbHorizontalDrift;
             transform.position = anchor + new Vector3(drift, hover, 0f);
-            if (visualRoot)
+            if (visualRoot && orbFormed)
             {
                 visualRoot.Rotate(0f, 0f, config.orbRotationSpeed * Time.unscaledDeltaTime);
                 float breath = 1f + Mathf.Sin(time * config.orbPulseSpeed) * config.orbBreathAmount;
@@ -187,26 +205,20 @@ namespace Reflectable
             float duration = config ? config.orbFormationDuration : .32f;
             float gatherDuration = duration * .74f;
             float settleDuration = duration - gatherDuration;
-            SetDisplayAlpha(0f);
             for (float time = 0f; time < gatherDuration; time += Time.unscaledDeltaTime)
             {
                 float progress = Mathf.Clamp01(time / gatherDuration);
                 float eased = 1f - Mathf.Pow(1f - progress, 3f);
                 if (visualRoot) visualRoot.localScale = Vector3.LerpUnclamped(Vector3.zero, orbBaseScale * 1.12f, eased);
-                if (comboDisplayRoot) comboDisplayRoot.localScale = Vector3.one * Mathf.Lerp(.84f, 1.04f, eased);
-                SetDisplayAlpha(Mathf.Clamp01(progress * 3.5f));
                 yield return null;
             }
             for (float time = 0f; time < settleDuration; time += Time.unscaledDeltaTime)
             {
                 float progress = Mathf.Clamp01(time / settleDuration);
                 if (visualRoot) visualRoot.localScale = Vector3.Lerp(orbBaseScale * 1.12f, orbBaseScale, Mathf.SmoothStep(0f, 1f, progress));
-                if (comboDisplayRoot) comboDisplayRoot.localScale = Vector3.one * Mathf.Lerp(1.04f, 1f, Mathf.SmoothStep(0f, 1f, progress));
                 yield return null;
             }
             if (visualRoot) visualRoot.localScale = orbBaseScale;
-            if (comboDisplayRoot) comboDisplayRoot.localScale = Vector3.one;
-            SetDisplayAlpha(1f);
             forming = false;
             summonRoutine = null;
         }
@@ -215,16 +227,19 @@ namespace Reflectable
         {
             if (!comboDisplayRoot) yield break;
             Vector3 start = Vector3.one;
-            float amount = Mathf.Clamp(tier.punchScale, 1.08f, 1.28f);
-            for (float time = 0f; time < .08f; time += Time.unscaledDeltaTime)
+            float amount = Mathf.Clamp(config ? config.comboTextPopScale : tier.punchScale, 1.18f, 1.28f);
+            float totalDuration = config ? config.comboTextAnimationDuration : .21f;
+            float inDuration = totalDuration * .38f;
+            float outDuration = totalDuration - inDuration;
+            for (float time = 0f; time < inDuration; time += Time.unscaledDeltaTime)
             {
-                float progress = time / .08f;
+                float progress = time / inDuration;
                 comboDisplayRoot.localScale = Vector3.LerpUnclamped(start, start * amount, 1f - Mathf.Pow(1f - progress, 3f));
                 yield return null;
             }
-            for (float time = 0f; time < .13f; time += Time.unscaledDeltaTime)
+            for (float time = 0f; time < outDuration; time += Time.unscaledDeltaTime)
             {
-                float progress = Mathf.Clamp01(time / .13f);
+                float progress = Mathf.Clamp01(time / outDuration);
                 float bounce = 1f + Mathf.Sin(progress * Mathf.PI * 2f) * .035f * (1f - progress);
                 comboDisplayRoot.localScale = Vector3.one * Mathf.Lerp(amount, bounce, Mathf.SmoothStep(0f, 1f, progress));
                 yield return null;
@@ -276,6 +291,7 @@ namespace Reflectable
                 yield return null;
             }
             gameObject.SetActive(false);
+            orbFormed = false;
             transform.localScale = Vector3.one;
             if (visualRoot) visualRoot.localScale = orbBaseScale;
             if (comboDisplayRoot) comboDisplayRoot.localScale = Vector3.one;

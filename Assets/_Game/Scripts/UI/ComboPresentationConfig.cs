@@ -43,6 +43,15 @@ namespace Reflectable
         [Range(.05f, .35f)] public float punchOutDuration = .15f;
         [Range(.1f, 1.5f)] public float comboBreakFade = .48f;
         [Range(.2f, 1.5f)] public float announcementDuration = .72f;
+        [Header("Every-hit feedback")]
+        [Range(.04f, .07f)] public float hitShakeDuration = .055f;
+        [Range(.02f, .12f)] public float hitShakeCooldown = .045f;
+        [Range(.01f, .2f)] public float impactFlashStrength = .045f;
+        [Range(2, 24)] public int impactSparkAmount = 8;
+        [Range(.15f, .8f)] public float hitShockwaveScale = .36f;
+        [Range(1.18f, 1.28f)] public float comboTextPopScale = 1.22f;
+        [Range(.12f, .35f)] public float comboTextAnimationDuration = .21f;
+        [Range(1.02f, 1.2f)] public float projectileHitPulseScale = 1.08f;
         [Header("Battlefield Combo Orb")]
         [Range(.35f, 2.5f)] public float orbBaseSize = .82f;
         [Range(0f, .35f)] public float orbHoverAmount = .09f;

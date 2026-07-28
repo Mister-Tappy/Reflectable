@@ -1,1 +1,18 @@
-namespace Reflectable { public sealed class CharacterGacha { public int Cost{get;private set;}=2; public bool Summon(ref int gems,CharacterManager manager,CharacterDatabase database){if(gems<Cost||database==null)return false;var drawn=database.RollGacha();if(!drawn)return false;gems-=Cost++;CharacterProgression.Unlock(drawn.characterId);CharacterProgression.EquippedCharacter=drawn.characterId;manager.Set(drawn.characterId,CharacterProgression.GetLevel(drawn.characterId,drawn.startingLevel));return true;} } }
+namespace Reflectable
+{
+    /// <summary>Stateless draw helper. It never stores ownership or a roster.</summary>
+    public sealed class CharacterGacha
+    {
+        public CharacterData Summon(ref int gems, CharacterDatabase database, CharacterGachaConfig config, out bool duplicate)
+        {
+            duplicate = false;
+            if (!config || gems < config.drawCost) return null;
+            CharacterData drawn = config.Roll(database);
+            if (!drawn) return null;
+            gems -= config.drawCost;
+            duplicate = drawn.characterId == CharacterProgression.ActiveCharacterId;
+            if (!duplicate) CharacterProgression.SetActiveCharacter(drawn.characterId, drawn.startingLevel);
+            return drawn;
+        }
+    }
+}

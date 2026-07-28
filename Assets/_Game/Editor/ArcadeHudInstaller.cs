@@ -15,12 +15,14 @@ namespace Reflectable.Editor
     [InitializeOnLoad]
     public static class ArcadeHudInstaller
     {
-        const int HudVersion = 11;
+        const int HudVersion = 12;
         const string ConfigFolder = "Assets/_Game/ScriptableObjects/UI";
         const string ConfigPath = ConfigFolder + "/ComboPresentationConfig.asset";
+        const string GachaConfigPath = ConfigFolder + "/CharacterGachaConfig.asset";
         const string PrefabFolder = "Assets/_Game/Prefabs/UI/ArcadeHUD";
         const string UpgradeCardPath = PrefabFolder + "/UpgradeCard.prefab";
         const string HudPrefabPath = PrefabFolder + "/ArcadeGameplayHUD.prefab";
+        const string GachaPrefabPath = PrefabFolder + "/CharacterGachaBanner.prefab";
         const string EffectsPrefabFolder = "Assets/_Game/Prefabs/Effects";
         const string ComboEffectsPrefabPath = EffectsPrefabFolder + "/ComboBattlefieldEffects.prefab";
         const string ProjectilePrefabPath = "Assets/Prefabs/Projectile.prefab";
@@ -39,8 +41,10 @@ namespace Reflectable.Editor
             EnsureFolders();
             panelSprite = AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
             ComboPresentationConfig config = BuildConfig();
+            CharacterGachaConfig gachaConfig = BuildGachaConfig();
             BuildUpgradeCardPrefab();
             BuildHudPrefab(config);
+            BuildGachaPanelPrefab(gachaConfig);
             BuildComboEffectsPrefab();
             ConfigureProjectilePrefab();
             ApplyToGameScene();
@@ -90,6 +94,9 @@ namespace Reflectable.Editor
             config.punchOutDuration = .15f;
             config.comboBreakFade = .48f;
             config.announcementDuration = .7f;
+            config.hitShakeDuration=.055f;config.hitShakeCooldown=.045f;config.impactFlashStrength=.045f;
+            config.impactSparkAmount=8;config.hitShockwaveScale=.36f;config.comboTextPopScale=1.22f;
+            config.comboTextAnimationDuration=.21f;config.projectileHitPulseScale=1.08f;
             config.orbBaseSize=.82f;config.orbHoverAmount=.09f;config.orbHorizontalDrift=.06f;config.orbHoverSpeed=1.7f;
             config.orbRotationSpeed=13f;config.orbPulseSpeed=3.2f;config.orbBreathAmount=.045f;
             config.orbFormationDuration=.32f;
@@ -98,14 +105,14 @@ namespace Reflectable.Editor
             config.maximumSaturation = 12f;
             config.tiers = new[]
             {
-                Tier(0, "", Color.white, new Color(.72f,.82f,1f), 1.08f, 1.5f, .18f, 0f, 0f, 0f, 0f),
-                Tier(20, "NICE", new Color(.22f,.68f,1f), new Color(.72f,.9f,1f), 1.12f, 2.5f, .55f, .32f, 0f, .008f, 0f),
-                Tier(50, "GREAT", new Color(.22f,1f,.48f), new Color(1f,.72f,.12f), 1.16f, 3f, .8f, .72f, 0f, .015f, 0f),
-                Tier(100, "AMAZING", new Color(1f,.48f,.06f), new Color(1f,.75f,.18f), 1.20f, 3.5f, 1.1f, 1f, .18f, .025f, .03f),
-                Tier(200, "UNSTOPPABLE", new Color(1f,.10f,.14f), new Color(1f,.34f,.20f), 1.23f, 4f, 1.35f, 1.15f, .75f, .04f, 0f),
-                Tier(300, "DOMINATING", new Color(.78f,.12f,1f), new Color(1f,.32f,.08f), 1.25f, 4.5f, 1.65f, 1.5f, 1f, .06f, .05f),
-                Tier(500, "LEGENDARY", new Color(1f,.58f,.06f), new Color(.22f,.92f,1f), 1.28f, 5f, 2f, 2f, 1.35f, .09f, .07f),
-                Tier(1000, "HYPER COMBO", Color.white, new Color(.2f,1f,.95f), 1.30f, 5f, 2.4f, 2.2f, 1.8f, .12f, .10f)
+                Tier(0, "", Color.white, new Color(.72f,.82f,1f), 1.08f, 1.5f, .18f, 0f, 0f, .006f, 0f),
+                Tier(20, "NICE", new Color(.22f,.68f,1f), new Color(.72f,.9f,1f), 1.12f, 2.5f, .55f, .32f, 0f, .009f, 0f),
+                Tier(50, "GREAT", new Color(.22f,1f,.48f), new Color(1f,.72f,.12f), 1.16f, 3f, .8f, .72f, 0f, .013f, 0f),
+                Tier(100, "AMAZING", new Color(1f,.48f,.06f), new Color(1f,.75f,.18f), 1.20f, 3.5f, 1.1f, 1f, .18f, .018f, .03f),
+                Tier(200, "UNSTOPPABLE", new Color(1f,.10f,.14f), new Color(1f,.34f,.20f), 1.23f, 4f, 1.35f, 1.15f, .75f, .025f, 0f),
+                Tier(300, "DOMINATING", new Color(.78f,.12f,1f), new Color(1f,.32f,.08f), 1.25f, 4.5f, 1.65f, 1.5f, 1f, .032f, .05f),
+                Tier(500, "LEGENDARY", new Color(1f,.58f,.06f), new Color(.22f,.92f,1f), 1.28f, 5f, 2f, 2f, 1.35f, .018f, .07f),
+                Tier(1000, "HYPER COMBO", Color.white, new Color(.2f,1f,.95f), 1.30f, 5f, 2.4f, 2.2f, 1.8f, .018f, .10f)
             };
             config.milestones = new[]
             {
@@ -117,6 +124,31 @@ namespace Reflectable.Editor
                 Milestone(500,"LEGENDARY",true,1.3f,.07f,.09f),
                 Milestone(1000,"HYPER COMBO",true,1.5f,.10f,.12f)
             };
+            EditorUtility.SetDirty(config);
+            return config;
+        }
+
+        static CharacterGachaConfig BuildGachaConfig()
+        {
+            var config=AssetDatabase.LoadAssetAtPath<CharacterGachaConfig>(GachaConfigPath);
+            if(!config)
+            {
+                config=ScriptableObject.CreateInstance<CharacterGachaConfig>();
+                AssetDatabase.CreateAsset(config,GachaConfigPath);
+            }
+            var database=AssetDatabase.LoadAssetAtPath<CharacterDatabase>("Assets/_Game/ScriptableObjects/Characters/CharacterDatabase.asset");
+            config.drawCost=2;
+            config.featuredCharacter=database?database.Find("marina"):null;
+            config.featuredCharacterRate=.18f;
+            config.useCharacterWeights=true;
+            config.duplicateCompensation=DuplicateCompensationType.SkillPoints;
+            config.duplicateCompensationAmount=1;
+            config.summonAnimationDuration=2.1f;
+            config.allowSkipAfterFirstViewing=true;
+            config.rareColor=new Color(.15f,.82f,1f);
+            config.epicColor=new Color(.65f,.28f,1f);
+            config.legendaryColor=new Color(1f,.68f,.12f);
+            config.mythicColor=new Color(1f,.22f,.58f);
             EditorUtility.SetDirty(config);
             return config;
         }
@@ -205,19 +237,21 @@ namespace Reflectable.Editor
 
             var bottom = Ui("BottomActionBar", safe.transform, new Vector2(.5f,0f), new Vector2(0f,14f), new Vector2(1884f,118f));
             bottom.GetComponent<RectTransform>().pivot = new Vector2(.5f,0f);
-            var characterPanel = Panel("CharacterIdentity", bottom.transform, new Vector2(0f,.5f), new Vector2(145f,0f), new Vector2(260f,104f), new Color(.14f,.10f,.24f,.86f));
+            var characterPanel = Panel("CharacterIdentity", bottom.transform, new Vector2(0f,.5f), new Vector2(150f,0f), new Vector2(280f,116f), new Color(.14f,.10f,.24f,.86f));
             var portraitGlow = Panel("PortraitGlow", characterPanel.transform, new Vector2(0f,.5f), new Vector2(47f,0f), new Vector2(86f,86f), new Color(.6f,.4f,1f,.28f)).GetComponent<Image>();
             var portrait = Panel("Portrait", characterPanel.transform, new Vector2(0f,.5f), new Vector2(47f,0f), new Vector2(76f,76f), Color.white).GetComponent<Image>(); portrait.preserveAspect=true;
             var characterName = Text("Name", characterPanel.transform, "MARINA", 17f, TextAlignmentOptions.Left, new Vector2(164f,24f), new Vector2(140f,24f));
             var characterLevel = Text("Level", characterPanel.transform, "Lv.1", 14f, TextAlignmentOptions.Left, new Vector2(164f,1f), new Vector2(140f,21f));
             var spText = Text("SkillPoints", characterPanel.transform, "SP  0", 14f, TextAlignmentOptions.Left, new Vector2(164f,-24f), new Vector2(140f,21f));
+            var passiveName = Text("PassiveName", characterPanel.transform, "TIDAL REFLECTION", 11f, TextAlignmentOptions.Left, new Vector2(164f,-45f), new Vector2(150f,18f));
+            passiveName.color=new Color(.7f,.9f,1f,1f);passiveName.fontStyle=FontStyles.Bold;
 
             var upgradeCluster = Ui("UpgradeCluster", bottom.transform, new Vector2(.5f,.5f), Vector2.zero, new Vector2(500f,100f));
             var power = UpgradeCard("PowerCard", upgradeCluster.transform, -168f);
             var ricochet = UpgradeCard("RicochetCard", upgradeCluster.transform, 0f);
             var extraBall = UpgradeCard("ExtraBallCard", upgradeCluster.transform, 168f);
             var rightActions = Ui("RightActions", bottom.transform, new Vector2(1f,.5f), new Vector2(-140f,0f), new Vector2(270f,104f));
-            var collection = CompactButton("CollectionButton", rightActions.transform, "CHARACTER", new Vector2(.5f,.5f), new Vector2(-67f,0f), new Vector2(122f,82f));
+            var collection = CompactButton("CollectionButton", rightActions.transform, "SUMMON", new Vector2(.5f,.5f), new Vector2(-67f,0f), new Vector2(122f,82f));
             var skip = CompactButton("SkipTurnButton", rightActions.transform, ">>\nSKIP", new Vector2(.5f,.5f), new Vector2(67f,0f), new Vector2(122f,82f));
             var badge = Panel("NewBadge", collection.transform, new Vector2(1f,1f), new Vector2(-5f,-5f), new Vector2(22f,22f), new Color(1f,.25f,.45f,1f));
             Text("Label", badge.transform, "!", 13f, TextAlignmentOptions.Center, Vector2.zero, new Vector2(20f,20f));
@@ -238,13 +272,73 @@ namespace Reflectable.Editor
             Set(cutIn,"panel",cutInPanel.GetComponent<RectTransform>());Set(cutIn,"canvasGroup",cutInGroup);Set(cutIn,"backgroundStrip",strip);Set(cutIn,"aura",aura);Set(cutIn,"characterImage",cutInImage);SetArray(cutIn,"afterimages",afterimages);Set(cutIn,"nameLabel",cutInName);Set(cutIn,"titleLabel",cutInTitle);Set(cutIn,"abilityLabel",cutInAbility);
 
             var hud = root.AddComponent<GameplayHudController>();
-            Set(hud,"hpFill",hpFill);Set(hud,"hpText",hpText);Set(hud,"stageText",stageText);Set(hud,"progressText",progressText);Set(hud,"turnText",turnText);Set(hud,"stageProgressFill",progressFill);Set(hud,"stageProgressSparkle",sparkle);Set(hud,"scoreText",scoreText);Set(hud,"gemsText",gemsText);Set(hud,"portrait",portrait);Set(hud,"portraitGlow",portraitGlow);Set(hud,"characterName",characterName);Set(hud,"characterLevel",characterLevel);Set(hud,"skillPointsText",spText);Set(hud,"powerCard",power);Set(hud,"ricochetCard",ricochet);Set(hud,"extraBallCard",extraBall);Set(hud,"collectionButton",collection);Set(hud,"skipButton",skip);Set(hud,"pauseButton",pause);Set(hud,"collectionBadge",badge);Set(hud,"highComboEdgeGlow",edgeGlow);
+            Set(hud,"hpFill",hpFill);Set(hud,"hpText",hpText);Set(hud,"stageText",stageText);Set(hud,"progressText",progressText);Set(hud,"turnText",turnText);Set(hud,"stageProgressFill",progressFill);Set(hud,"stageProgressSparkle",sparkle);Set(hud,"scoreText",scoreText);Set(hud,"gemsText",gemsText);Set(hud,"portrait",portrait);Set(hud,"portraitGlow",portraitGlow);Set(hud,"characterName",characterName);Set(hud,"characterLevel",characterLevel);Set(hud,"skillPointsText",spText);Set(hud,"passiveName",passiveName);Set(hud,"powerCard",power);Set(hud,"ricochetCard",ricochet);Set(hud,"extraBallCard",extraBall);Set(hud,"collectionButton",collection);Set(hud,"skipButton",skip);Set(hud,"pauseButton",pause);Set(hud,"collectionBadge",badge);Set(hud,"highComboEdgeGlow",edgeGlow);
             var combo = root.AddComponent<ComboPresentationController>();
             Set(combo,"config",config);Set(combo,"comboRoot",comboRoot.GetComponent<RectTransform>());Set(combo,"comboNumber",comboNumber);Set(combo,"comboCaption",caption);Set(combo,"hypeLabel",hype);Set(combo,"glow",glow);Set(combo,"flame",flame);Set(combo,"impactSplash",splash);Set(combo,"lightning",lightning);Set(combo,"cosmicOverlay",cosmic);SetArray(combo,"announcementPool",announcements);Set(combo,"cutIn",cutIn);Set(combo,"hud",hud);
             SetBool(combo,"worldOrbPrimary",true);
             comboRoot.SetActive(false);
 
             PrefabUtility.SaveAsPrefabAsset(root, HudPrefabPath);
+            Object.DestroyImmediate(root);
+        }
+
+        static void BuildGachaPanelPrefab(CharacterGachaConfig config)
+        {
+            var root=Panel("CharacterGachaBanner",null,StretchAnchor(),Vector2.zero,Vector2.zero,new Color(.035f,.02f,.08f,.94f));
+            var window=Panel("BannerWindow",root.transform,new Vector2(.5f,.5f),Vector2.zero,new Vector2(1540f,820f),new Color(.09f,.055f,.16f,1f));
+            var bannerBackground=window.GetComponent<Image>();
+            var topAccent=Panel("TopAccent",window.transform,new Vector2(.5f,1f),new Vector2(0f,-5f),new Vector2(1510f,10f),new Color(.35f,.8f,1f,.8f));
+            topAccent.GetComponent<Image>().raycastTarget=false;
+            var title=Text("Title",window.transform,"REFLECTABLE SUMMON",36f,TextAlignmentOptions.Left,new Vector2(-510f,355f),new Vector2(440f,52f));
+            title.fontStyle=FontStyles.Bold;
+            var close=CompactButton("CloseButton",window.transform,"CLOSE",new Vector2(1f,1f),new Vector2(-92f,-42f),new Vector2(140f,52f));
+
+            var artFrame=Panel("FeaturedArtFrame",window.transform,new Vector2(.5f,.5f),new Vector2(-385f,-15f),new Vector2(730f,700f),new Color(.12f,.08f,.22f,.96f));
+            var featuredGlow=Panel("FeaturedGlow",artFrame.transform,new Vector2(.5f,.5f),Vector2.zero,new Vector2(650f,650f),new Color(.25f,.8f,1f,.25f)).GetComponent<Image>();
+            featuredGlow.raycastTarget=false;
+            var featuredArtwork=Panel("FeaturedArtwork",artFrame.transform,new Vector2(.5f,.5f),new Vector2(0f,-18f),new Vector2(650f,650f),Color.white).GetComponent<Image>();
+            featuredArtwork.preserveAspect=true;featuredArtwork.raycastTarget=false;
+            var featuredLabel=Text("FeaturedLabel",artFrame.transform,"FEATURED CHARACTER",18f,TextAlignmentOptions.Center,new Vector2(0f,318f),new Vector2(600f,32f));
+            featuredLabel.fontStyle=FontStyles.Bold;featuredLabel.color=new Color(.55f,.9f,1f,1f);
+
+            var info=Ui("CharacterInfo",window.transform,new Vector2(.5f,.5f),new Vector2(420f,15f),new Vector2(600f,680f));
+            var characterName=Text("CharacterName",info.transform,"MARINA",58f,TextAlignmentOptions.Left,new Vector2(0f,252f),new Vector2(580f,72f));
+            characterName.fontStyle=FontStyles.Bold;
+            var rarity=Text("Rarity",info.transform,"★★ RARE",24f,TextAlignmentOptions.Left,new Vector2(0f,202f),new Vector2(580f,38f));
+            var divider=Panel("Divider",info.transform,new Vector2(.5f,.5f),new Vector2(0f,170f),new Vector2(580f,3f),new Color(.6f,.45f,1f,.65f));
+            divider.GetComponent<Image>().raycastTarget=false;
+            var passiveName=Text("PassiveName",info.transform,"TIDAL REFLECTION",25f,TextAlignmentOptions.Left,new Vector2(0f,125f),new Vector2(580f,42f));
+            passiveName.fontStyle=FontStyles.Bold;passiveName.color=new Color(.55f,.9f,1f,1f);
+            var passiveDescription=Text("PassiveDescription",info.transform,"Projectile impacts deal splash damage around the hit block.",19f,TextAlignmentOptions.TopLeft,new Vector2(0f,40f),new Vector2(580f,116f));
+            passiveDescription.textWrappingMode=TextWrappingModes.Normal;
+            var status=Text("Status",info.transform,"ACTIVE CHARACTER",17f,TextAlignmentOptions.Left,new Vector2(0f,-72f),new Vector2(580f,32f));
+            status.fontStyle=FontStyles.Bold;status.color=new Color(.82f,.74f,1f,1f);
+            var gems=Text("GemAmount",info.transform,"GEMS  0",23f,TextAlignmentOptions.Left,new Vector2(0f,-125f),new Vector2(280f,38f));
+            var cost=Text("DrawCost",info.transform,"COST  2 GEMS",20f,TextAlignmentOptions.Right,new Vector2(300f,-125f),new Vector2(280f,38f));
+            var draw=CompactButton("DrawButton",info.transform,"DRAW\nCOST: 2 GEMS",new Vector2(.5f,.5f),new Vector2(0f,-225f),new Vector2(420f,112f));
+            var drawImage=draw.GetComponent<Image>();drawImage.color=new Color(.18f,.68f,1f,1f);
+            var drawLabel=draw.GetComponentInChildren<TextMeshProUGUI>();drawLabel.fontSize=25f;drawLabel.fontStyle=FontStyles.Bold;
+            Text("RateHint",info.transform,"Each draw immediately replaces your active character.",14f,TextAlignmentOptions.Center,new Vector2(0f,-303f),new Vector2(560f,30f)).color=new Color(.76f,.72f,.86f,1f);
+
+            var revealObject=Panel("RevealOverlay",root.transform,StretchAnchor(),Vector2.zero,Vector2.zero,new Color(.025f,.012f,.07f,.97f));
+            var revealGroup=revealObject.AddComponent<CanvasGroup>();
+            var revealGlow=Panel("RevealGlow",revealObject.transform,new Vector2(.5f,.5f),new Vector2(0f,30f),new Vector2(730f,730f),new Color(.3f,.7f,1f,.45f)).GetComponent<Image>();
+            revealGlow.raycastTarget=false;
+            var revealArtwork=Panel("RevealArtwork",revealObject.transform,new Vector2(.5f,.5f),new Vector2(0f,35f),new Vector2(660f,680f),Color.white).GetComponent<Image>();
+            revealArtwork.preserveAspect=true;revealArtwork.raycastTarget=false;
+            var revealName=Text("RevealName",revealObject.transform,"MARINA",52f,TextAlignmentOptions.Center,new Vector2(0f,-310f),new Vector2(880f,66f));revealName.fontStyle=FontStyles.Bold;
+            var revealRarity=Text("RevealRarity",revealObject.transform,"★★ RARE",25f,TextAlignmentOptions.Center,new Vector2(0f,-356f),new Vector2(700f,38f));
+            var revealPassive=Text("RevealPassive",revealObject.transform,"TIDAL REFLECTION\nSplash damage around impact.",18f,TextAlignmentOptions.Center,new Vector2(0f,-414f),new Vector2(800f,70f));revealPassive.textWrappingMode=TextWrappingModes.Normal;
+            var duplicate=Text("DuplicateMessage",revealObject.transform,"DUPLICATE",18f,TextAlignmentOptions.Center,new Vector2(0f,-470f),new Vector2(760f,58f));duplicate.color=new Color(1f,.78f,.25f,1f);duplicate.fontStyle=FontStyles.Bold;
+            var skip=CompactButton("SkipButton",revealObject.transform,"SKIP",new Vector2(1f,0f),new Vector2(-100f,54f),new Vector2(150f,54f));
+            var continueButton=CompactButton("ContinueButton",revealObject.transform,"CONTINUE",new Vector2(.5f,0f),new Vector2(0f,58f),new Vector2(260f,66f));
+            continueButton.GetComponent<Image>().color=new Color(.36f,.24f,.65f,1f);
+            revealObject.SetActive(false);
+
+            var gacha=root.AddComponent<CharacterGachaUI>();
+            Set(gacha,"config",config);Set(gacha,"bannerBackground",bannerBackground);Set(gacha,"featuredArtwork",featuredArtwork);Set(gacha,"featuredGlow",featuredGlow);Set(gacha,"featuredLabel",featuredLabel);Set(gacha,"characterName",characterName);Set(gacha,"rarityText",rarity);Set(gacha,"passiveName",passiveName);Set(gacha,"passiveDescription",passiveDescription);Set(gacha,"gemAmount",gems);Set(gacha,"drawCost",cost);Set(gacha,"statusText",status);Set(gacha,"drawButton",draw);Set(gacha,"closeButton",close);Set(gacha,"revealGroup",revealGroup);Set(gacha,"revealArtwork",revealArtwork);Set(gacha,"revealGlow",revealGlow);Set(gacha,"revealName",revealName);Set(gacha,"revealRarity",revealRarity);Set(gacha,"revealPassive",revealPassive);Set(gacha,"duplicateMessage",duplicate);Set(gacha,"skipButton",skip);Set(gacha,"continueButton",continueButton);
+            root.SetActive(false);
+            PrefabUtility.SaveAsPrefabAsset(root,GachaPrefabPath);
             Object.DestroyImmediate(root);
         }
 
@@ -321,6 +415,13 @@ namespace Reflectable.Editor
             instance.name = "ArcadeHUD";
             instance.transform.SetAsLastSibling();
             var hud = instance.GetComponent<GameplayHudController>();
+            Transform previousCharacterPanel=canvas.transform.Find("CharacterPanel");
+            if(previousCharacterPanel)Object.DestroyImmediate(previousCharacterPanel.gameObject);
+            var gachaPrefab=AssetDatabase.LoadAssetAtPath<GameObject>(GachaPrefabPath);
+            var gachaInstance=(GameObject)PrefabUtility.InstantiatePrefab(gachaPrefab,canvas.transform);
+            gachaInstance.name="CharacterPanel";
+            gachaInstance.transform.SetAsLastSibling();
+            var gacha=gachaInstance.GetComponent<CharacterGachaUI>();
             Transform effectsLayer=EnsureChild(feedback.transform,"EffectsLayer");
             Transform damageNumberLayer=EnsureChild(feedback.transform,"DamageNumberLayer");
             Transform previousEffects=effectsLayer.Find("ComboBattlefieldEffects");if(previousEffects)Object.DestroyImmediate(previousEffects.gameObject);
@@ -330,8 +431,9 @@ namespace Reflectable.Editor
             var orb=battlefieldEffects.GetComponentInChildren<ComboOrbController>(true);
             var world=battlefieldEffects.GetComponentInChildren<ComboWorldReactionController>(true);
             Set(feedback,"effectsLayer",effectsLayer);Set(feedback,"damageNumberLayer",damageNumberLayer);Set(feedback,"comboOrb",orb);Set(feedback,"worldReaction",world);
-            Set(controller,"gameplayHud",hud);Set(controller,"powerButton",hud.PowerButton);Set(controller,"ricochetButton",hud.RicochetButton);Set(controller,"extraBallButton",hud.ExtraBallButton);Set(controller,"characterButton",hud.CollectionButton);Set(controller,"skipTurnButton",hud.SkipButton);Set(controller,"pauseButton",hud.PauseButton);
+            Set(controller,"gameplayHud",hud);Set(controller,"characterPanel",gachaInstance);Set(controller,"characterGacha",gacha);Set(controller,"powerButton",hud.PowerButton);Set(controller,"ricochetButton",hud.RicochetButton);Set(controller,"extraBallButton",hud.ExtraBallButton);Set(controller,"characterButton",hud.CollectionButton);Set(controller,"skipTurnButton",hud.SkipButton);Set(controller,"pauseButton",hud.PauseButton);
             Hook(hud.PowerButton,controller,"Power");Hook(hud.RicochetButton,controller,"Ricochet");Hook(hud.ExtraBallButton,controller,"Extra Ball");Hook(hud.CollectionButton,controller.OpenCharacterPanel);Hook(hud.SkipButton,controller.SkipTurn);Hook(hud.PauseButton,controller.TogglePause);
+            Hook(gacha.DrawButton,controller.DrawCharacter);Hook(gacha.CloseButton,controller.CloseCharacterPanel);Hook(gacha.ContinueButton,controller.CloseCharacterPanel);
             EditorUtility.SetDirty(controller);EditorUtility.SetDirty(feedback);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
@@ -344,6 +446,7 @@ namespace Reflectable.Editor
                 var data=AssetDatabase.LoadAssetAtPath<CharacterData>(AssetDatabase.GUIDToAssetPath(guid));
                 if(!data)continue;
                 if(!data.fullBodyCutIn)data.fullBodyCutIn=data.frontSprite?data.frontSprite:data.portrait;
+                if(!data.bannerArtwork)data.bannerArtwork=data.fullBodyCutIn?data.fullBodyCutIn:data.frontSprite?data.frontSprite:data.portrait;
                 if(string.IsNullOrWhiteSpace(data.cutInAbilityName))data.cutInAbilityName=data.title;
                 if(data.cutInScale<=0f)data.cutInScale=1f;
                 if(data.comboAuraColor.a<=0f)data.comboAuraColor=data.themeColor;

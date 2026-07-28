@@ -9,7 +9,7 @@ MonoBehaviour:
   stageName: MOUNTAIN
   difficultyLabel: ADVANCED
   description: Cool cliffs and layered mountain silhouettes.
-  stageVisualPrefab: {fileID: 100100000, guid: 04040404040404040404040404040404, type: 3}
+  stageVisualPrefab: {fileID: 5376462229053701590, guid: 04040404040404040404040404040404, type: 3}
   stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   stageSelectTint: {r: 0.62, g: 0.77, b: 0.91, a: 1}
   backgroundGradient:

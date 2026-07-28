@@ -32,7 +32,7 @@ namespace Reflectable
                 return;
             }
 
-            if (current) Destroy(current);
+            if (current) { current.SetActive(false); Destroy(current); }
             current = Instantiate(data.prefab, characterSlot);
             current.name = data.displayName + "(Clone)";
             current.transform.localPosition = Vector3.zero;
