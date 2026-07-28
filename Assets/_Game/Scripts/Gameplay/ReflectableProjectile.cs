@@ -12,12 +12,23 @@ namespace Reflectable
         readonly HashSet<int> contactedBlocks = new HashSet<int>();
         Vector2 lastVelocity;
         int damage;
+        int initialDamage;
+        int lunariaRicochets;
+        int starPierceRemaining;
         float speed;
         float startedAt;
         bool launched;
         bool exiting;
         Transform visual;
         TrailRenderer trail;
+        [SerializeField] SpriteRenderer comboGlow;
+        [SerializeField] SpriteRenderer comboRing;
+        [SerializeField] SpriteRenderer comboLightning;
+        int comboVisualStage;
+        Color comboTrailStart = new Color(.95f,.78f,1f,.8f);
+        Color comboTrailEnd = new Color(.65f,.85f,1f,0f);
+        float comboTrailWidth = 1f;
+        float comboTrailTime = 1f;
         Vector2 lastSamplePosition, lastCollisionNormal;
         float nextStuckSample, lastCollisionAt;
         int lastColliderId, repeatedCollisionCount;
@@ -38,13 +49,17 @@ namespace Reflectable
             if (projectileLayer >= 0) { gameObject.layer = projectileLayer; Physics2D.IgnoreLayerCollision(projectileLayer, projectileLayer, true); }
             visual = transform.Find("Visual");
             trail = GetComponent<TrailRenderer>() ?? gameObject.AddComponent<TrailRenderer>();
-            trail.time = .16f; trail.startWidth = .12f; trail.endWidth = .01f; trail.startColor = new Color(.95f,.78f,1f,.8f); trail.endColor = new Color(.65f,.85f,1f,0f);
+            trail.time = .16f; trail.startWidth = .12f; trail.endWidth = .01f; trail.startColor = comboTrailStart; trail.endColor = comboTrailEnd;
+            SetComboRenderer(comboGlow, false, Color.clear, 1f);
+            SetComboRenderer(comboRing, false, Color.clear, 1f);
+            SetComboRenderer(comboLightning, false, Color.clear, 1f);
         }
 
         public void Launch(ReflectableGameController owner, Vector2 direction, float launchSpeed, int initialDamage)
         {
             game = owner;
             damage = initialDamage;
+            this.initialDamage = initialDamage;
             speed = launchSpeed;
             startedAt = Time.time;
             launched = true;
@@ -57,6 +72,16 @@ namespace Reflectable
 
         public int Damage => damage;
         public void AddDamage(int amount) => damage += amount;
+        public void ApplyLunariaRicochet()
+        {
+            lunariaRicochets++;
+            damage = Mathf.Min(initialDamage * 2, damage + Mathf.Max(1, Mathf.RoundToInt(initialDamage * .05f)));
+            if (lunariaRicochets == 20)
+            {
+                starPierceRemaining = 5;
+                Debug.Log("[Character] Lunaria Star Ball activated with 5 pierces.");
+            }
+        }
 
         void FixedUpdate()
         {
@@ -67,7 +92,15 @@ namespace Reflectable
             var direction = body.linearVelocity.sqrMagnitude > .001f ? body.linearVelocity.normalized : lastVelocity.sqrMagnitude > .001f ? lastVelocity.normalized : Vector2.up;
             lastVelocity = direction * Mathf.Min(speed * multiplier, speed * 2.5f);
             body.linearVelocity = lastVelocity;
-            if (trail) { trail.time = Mathf.Lerp(.16f, .42f, (multiplier - 1f) / 1.5f); trail.startWidth = Mathf.Lerp(.12f, .2f, (multiplier - 1f) / 1.5f); }
+            if (trail)
+            {
+                trail.time = Mathf.Lerp(.16f, .42f, (multiplier - 1f) / 1.5f) * comboTrailTime;
+                trail.startWidth = Mathf.Lerp(.12f, .2f, (multiplier - 1f) / 1.5f) * comboTrailWidth;
+                trail.startColor = comboTrailStart;
+                trail.endColor = comboTrailEnd;
+            }
+            if (comboRing && comboRing.enabled) comboRing.transform.Rotate(0f,0f,Time.fixedDeltaTime*(comboVisualStage>=6?150f:70f));
+            if (comboLightning && comboLightning.enabled) comboLightning.transform.localRotation=Quaternion.Euler(0f,0f,Mathf.Sin(Time.time*24f)*22f);
         }
 
         void OnCollisionEnter2D(Collision2D hit)
@@ -82,6 +115,14 @@ namespace Reflectable
             var block = hit.collider.GetComponentInParent<ReflectableBlockView>();
             if (block && contactedBlocks.Add(block.GetInstanceID()))
                 game.HitBlock(block, damage);
+
+            if (block && starPierceRemaining > 0)
+            {
+                starPierceRemaining--;
+                body.position += incoming.normalized * .22f;
+                body.linearVelocity = incoming.normalized * Mathf.Max(speed, incoming.magnitude);
+                return;
+            }
 
             var normal = GetImpactNormal(hit, incoming);
             Reflect(incoming, normal);
@@ -169,6 +210,51 @@ namespace Reflectable
             if (notifyOwner && game) game.ProjectileFinished(this, transform.position.x);
             Destroy(gameObject);
         }
+
+        public void ConfigureComboVisual(Sprite circle, Sprite ring, Material material)
+        {
+            SetupComboRenderer(comboGlow, circle, material);
+            SetupComboRenderer(comboRing, ring, material);
+            SetupComboRenderer(comboLightning, ring, material);
+        }
+
+        public void ApplyComboVisual(int combo, ComboTierSettings tier)
+        {
+            comboVisualStage = combo >= 1000 ? 7 : combo >= 500 ? 6 : combo >= 300 ? 5 : combo >= 200 ? 4 : combo >= 100 ? 3 : combo >= 50 ? 2 : combo >= 20 ? 1 : 0;
+            comboTrailStart = tier.primaryColor; comboTrailStart.a = .9f;
+            comboTrailEnd = tier.secondaryColor; comboTrailEnd.a = 0f;
+            comboTrailWidth = 1f + comboVisualStage * .10f;
+            comboTrailTime = 1f + comboVisualStage * .12f;
+            SetComboRenderer(comboGlow, true, WithAlpha(tier.primaryColor,.24f+comboVisualStage*.045f), .62f+comboVisualStage*.06f);
+            SetComboRenderer(comboRing, comboVisualStage>=3, WithAlpha(tier.secondaryColor,.45f), .72f+comboVisualStage*.055f);
+            SetComboRenderer(comboLightning, comboVisualStage>=4, WithAlpha(Color.Lerp(tier.secondaryColor,new Color(.75f,.3f,1f),.6f),.55f), .84f+comboVisualStage*.06f);
+        }
+
+        public void ResetComboVisual()
+        {
+            comboVisualStage=0;
+            comboTrailStart=new Color(.95f,.78f,1f,.8f);
+            comboTrailEnd=new Color(.65f,.85f,1f,0f);
+            comboTrailWidth=comboTrailTime=1f;
+            SetComboRenderer(comboGlow,false,Color.clear,1f);
+            SetComboRenderer(comboRing,false,Color.clear,1f);
+            SetComboRenderer(comboLightning,false,Color.clear,1f);
+        }
+
+        static void SetupComboRenderer(SpriteRenderer renderer,Sprite sprite,Material material)
+        {
+            if(!renderer)return;
+            renderer.sprite=sprite;
+            renderer.sharedMaterial=material;
+        }
+        static void SetComboRenderer(SpriteRenderer renderer,bool visible,Color color,float scale)
+        {
+            if(!renderer)return;
+            renderer.enabled=visible;
+            renderer.color=color;
+            renderer.transform.localScale=Vector3.one*scale;
+        }
+        static Color WithAlpha(Color color,float alpha){color.a=alpha;return color;}
 
         void Exit()
         {

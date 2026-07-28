@@ -12,7 +12,9 @@ namespace Reflectable
 
         public Transform CurrentVisual => current ? current.transform : null;
         public Collider2D GameplayHitbox => gameplayHitbox;
-        public string CurrentCharacterId { get; private set; } = "mimi";
+        public string CurrentCharacterId { get; private set; } = CharacterProgression.StarterId;
+        public CharacterDatabase Database => database;
+        public CharacterData CurrentData => database ? database.Find(CurrentCharacterId) : null;
 
         public void Configure(CharacterDatabase value, Transform slot)
         {
@@ -48,7 +50,7 @@ namespace Reflectable
                 gameplayHitbox = box;
             }
 
-            foreach (var renderer in current.GetComponentsInChildren<SpriteRenderer>(true))
+            foreach (var renderer in current.GetComponentsInChildren<SpriteRenderer>(false))
             {
                 renderer.enabled = true;
                 var color = renderer.color; color.a = 1f; renderer.color = color;

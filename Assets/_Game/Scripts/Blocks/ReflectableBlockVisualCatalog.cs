@@ -10,6 +10,9 @@ namespace Reflectable
         public ReflectableBlockVisualData bombBlock;
         static ReflectableBlockVisualCatalog cached;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCache() => cached = null;
+
         public static ReflectableBlockVisualData For(ReflectableBlockType type)
         {
             if (!cached) cached = Resources.Load<ReflectableBlockVisualCatalog>("ReflectableBlockVisualCatalog");

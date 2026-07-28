@@ -8,6 +8,9 @@ namespace Reflectable
         [SerializeField] ReflectableStageData[] stages = new ReflectableStageData[0];
         static ReflectableStageCatalog cached;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetCache() => cached = null;
+
         public static ReflectableStageCatalog Current
         {
             get

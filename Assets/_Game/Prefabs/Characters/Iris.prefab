@@ -1,0 +1,299 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 100001}
+  - component: {fileID: 100002}
+  m_Layer: 0
+  m_Name: Iris
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &100001
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 100011}
+  - {fileID: 101001}
+  - {fileID: 101101}
+  - {fileID: 102001}
+  - {fileID: 102101}
+  - {fileID: 102201}
+  m_Father: {fileID: 0}
+--- !u!61 &100002
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_IsTrigger: 1
+  m_Offset: {x: 0, y: -0.03}
+  m_Size: {x: 0.72, y: 0.9}
+--- !u!1 &100010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 100011}
+  m_Layer: 0
+  m_Name: VisualRoot
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &100011
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 100101}
+  - {fileID: 100201}
+  - {fileID: 100301}
+  m_Father: {fileID: 100001}
+--- !u!1 &100100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 100101}
+  - component: {fileID: 100102}
+  m_Layer: 0
+  m_Name: FrontSprite
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &100101
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.15, y: 1.15, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100011}
+--- !u!212 &100102
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100100}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 50
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 0.28, g: 0.85, b: 0.46, a: 1}
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_WasSpriteAssigned: 1
+--- !u!1 &100200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 100201}
+  - component: {fileID: 100202}
+  m_Layer: 0
+  m_Name: SideSprite
+  m_TagString: Untagged
+  m_IsActive: 0
+--- !u!4 &100201
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.15, y: 1.15, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100011}
+--- !u!212 &100202
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100200}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 50
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 0.28, g: 0.85, b: 0.46, a: 1}
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_WasSpriteAssigned: 1
+--- !u!1 &100300
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 100301}
+  - component: {fileID: 100302}
+  m_Layer: 0
+  m_Name: BackSprite
+  m_TagString: Untagged
+  m_IsActive: 0
+--- !u!4 &100301
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100300}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.15, y: 1.15, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100011}
+--- !u!212 &100302
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 100300}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 50
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 0.28, g: 0.85, b: 0.46, a: 1}
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_WasSpriteAssigned: 1
+--- !u!1 &101000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 101001}
+  - component: {fileID: 101002}
+  m_Layer: 0
+  m_Name: Portrait
+  m_TagString: Untagged
+  m_IsActive: 0
+--- !u!4 &101001
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 101000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.6, y: 1.6, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100001}
+--- !u!212 &101002
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 101000}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 52
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 0.28, g: 0.85, b: 0.46, a: 1}
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_WasSpriteAssigned: 1
+--- !u!1 &101100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 101101}
+  - component: {fileID: 101102}
+  m_Layer: 0
+  m_Name: Icon
+  m_TagString: Untagged
+  m_IsActive: 0
+--- !u!4 &101101
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 101100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100001}
+--- !u!212 &101102
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 101100}
+  m_Enabled: 1
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_SortingLayerID: 0
+  m_SortingOrder: 52
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Color: {r: 0.28, g: 0.85, b: 0.46, a: 1}
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_WasSpriteAssigned: 1
+--- !u!1 &102000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 102001}
+  m_Layer: 0
+  m_Name: WeaponRoot
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &102001
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 102000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100001}
+--- !u!1 &102100
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 102101}
+  m_Layer: 0
+  m_Name: FirePoint
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &102101
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 102100}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100001}
+--- !u!1 &102200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_Component:
+  - component: {fileID: 102201}
+  m_Layer: 0
+  m_Name: Effects
+  m_TagString: Untagged
+  m_IsActive: 1
+--- !u!4 &102201
+Transform:
+  m_ObjectHideFlags: 0
+  m_GameObject: {fileID: 102200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  []
+  m_Father: {fileID: 100001}

@@ -23,5 +23,10 @@ namespace Reflectable
 
             Instance = this;
         }
+
+        private void OnDestroy()
+        {
+            if (Instance == this) Instance = null;
+        }
     }
 }
