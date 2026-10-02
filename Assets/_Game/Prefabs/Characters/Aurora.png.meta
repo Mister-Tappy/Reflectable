@@ -1,13 +1,10 @@
 fileFormatVersion: 2
-guid: ac0b8ce20f4a62e499bbbcb91efdf835
+guid: 37c49459039d4984aa160b6a7d4a7fdb
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9049539159198059528
-    second: Alice_0
-  - first:
-      213: 8519099831857675943
-    second: Alice_1
+      213: -5267938533852694876
+    second: Aurora_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,13 +113,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Alice_0
+      name: Aurora_0
       rect:
         serializedVersion: 2
-        x: 0
+        x: 17
         y: 0
-        width: 957
-        height: 1535
+        width: 995
+        height: 1536
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -131,30 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 80cccf43beb669d70800000000000000
-      internalID: 9049539159198059528
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Alice_1
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 1467
-        width: 5
-        height: 12
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 7ae77f3392ce93670800000000000000
-      internalID: 8519099831857675943
+      spriteID: 4a63e1f60d584e6b0800000000000000
+      internalID: -5267938533852694876
       vertices: []
       indices: 
       edges: []
@@ -173,8 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Alice_0: 9049539159198059528
-      Alice_1: 8519099831857675943
+      Aurora_0: -5267938533852694876
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

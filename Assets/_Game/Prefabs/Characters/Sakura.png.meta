@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: ac0b8ce20f4a62e499bbbcb91efdf835
+guid: 3c5e778ec0e96d94ab4c541eb069aee1
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 9049539159198059528
-    second: Alice_0
+      213: 1035849391296185231
+    second: Sakura_0
   - first:
-      213: 8519099831857675943
-    second: Alice_1
+      213: -3439094729127031763
+    second: Sakura_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -116,13 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Alice_0
+      name: Sakura_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 957
-        height: 1535
+        width: 1024
+        height: 1536
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -131,20 +131,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 80cccf43beb669d70800000000000000
-      internalID: 9049539159198059528
+      spriteID: f8383018883106e00800000000000000
+      internalID: 1035849391296185231
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Alice_1
+      name: Sakura_1
       rect:
         serializedVersion: 2
         x: 0
-        y: 1467
+        y: 1023
         width: 5
-        height: 12
+        height: 14
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -153,8 +153,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 7ae77f3392ce93670800000000000000
-      internalID: 8519099831857675943
+      spriteID: d2c0771a091e540d0800000000000000
+      internalID: -3439094729127031763
       vertices: []
       indices: 
       edges: []
@@ -173,8 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Alice_0: 9049539159198059528
-      Alice_1: 8519099831857675943
+      Sakura_0: 1035849391296185231
+      Sakura_1: -3439094729127031763
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
