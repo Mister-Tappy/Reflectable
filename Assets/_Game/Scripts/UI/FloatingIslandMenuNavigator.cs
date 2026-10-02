@@ -89,7 +89,7 @@ namespace Reflectable
                 return;
             }
             BuildWorld();
-            BuildDestinationPanels();
+            BindDestinationPanels();
         }
 
         void Start()
@@ -299,59 +299,48 @@ namespace Reflectable
             }
         }
 
-        void BuildDestinationPanels()
+        void BindDestinationPanels()
         {
-            Canvas canvas = FindFirstObjectByType<Canvas>();
-            if (!canvas) return;
-            continuePanel = BuildOverlayPanel(canvas.transform, "ContinueDestinationPanel", "CONTINUE", "Continue your saved journey?", out _);
+            continuePanel = FindDestinationPanel("ContinueDestinationPanel");
+            exitPanel = FindDestinationPanel("ExitDestinationPanel");
+            if (!continuePanel || !exitPanel)
+            {
+                Debug.LogError("MainMenu scene needs editable ContinueDestinationPanel and ExitDestinationPanel objects under its Canvas.", this);
+                enabled = false;
+                return;
+            }
+
             var hasSave = System.IO.File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "reflectable_run.json"));
-            BuildPanelText(continuePanel.transform, hasSave ? "A saved run is ready." : "No saved run found yet.", new Vector2(0f, 28f), new Vector2(680f, 55f), 24);
-            BuildPanelButton(continuePanel.transform, "ContinueRunButton", hasSave ? "CONTINUE RUN" : "NO SAVED RUN", new Vector2(-132f, -112f), () => menuController?.ContinueRunNow(), !hasSave);
-            BuildPanelButton(continuePanel.transform, "BackButton", "BACK", new Vector2(132f, -112f), () => ReturnToMainMenu());
+            var saveStatus = continuePanel.transform.Find("Card/SaveStatusText")?.GetComponent<Text>();
+            if (saveStatus) saveStatus.text = hasSave ? "A saved run is ready." : "No saved run found yet.";
+            BindDestinationButton(continuePanel, "ContinueRunButton", hasSave ? "CONTINUE RUN" : "NO SAVED RUN", !hasSave, () => menuController?.ContinueRunNow());
+            BindDestinationButton(continuePanel, "BackButton", "BACK", false, () => ReturnToMainMenu());
             continuePanel.SetActive(false);
 
-            exitPanel = BuildOverlayPanel(canvas.transform, "ExitDestinationPanel", "EXIT COMPLETE", "The ball has reached the exit island.", out _);
-            BuildPanelText(exitPanel.transform, "You may now close the game window.", new Vector2(0f, 8f), new Vector2(720f, 52f), 22);
-            BuildPanelButton(exitPanel.transform, "ExitBackButton", "BACK", new Vector2(0f, -112f), () => ReturnToMainMenu());
+            BindDestinationButton(exitPanel, "ExitBackButton", "BACK", false, () => ReturnToMainMenu());
             exitPanel.SetActive(false);
         }
 
-        GameObject BuildOverlayPanel(Transform canvas, string panelName, string title, string subtitle, out CanvasGroup group)
+        GameObject FindDestinationPanel(string panelName)
         {
-            var panel = new GameObject(panelName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(CanvasGroup));
-            panel.transform.SetParent(canvas, false);
-            var rect = panel.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero; rect.anchorMax = Vector2.one; rect.offsetMin = rect.offsetMax = Vector2.zero;
-            var image = panel.GetComponent<Image>(); image.color = new Color(.08f, .12f, .24f, .76f); image.raycastTarget = true;
-            group = panel.GetComponent<CanvasGroup>(); group.alpha = 0f;
-            var card = new GameObject("Card", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            card.transform.SetParent(panel.transform, false);
-            var cardRect = card.GetComponent<RectTransform>(); cardRect.anchorMin = cardRect.anchorMax = new Vector2(.5f, .5f); cardRect.sizeDelta = new Vector2(760f, 360f);
-            card.GetComponent<Image>().color = new Color(.86f, .91f, 1f, .96f);
-            BuildPanelText(card.transform, title, new Vector2(0f, 105f), new Vector2(700f, 64f), 38, new Color(.24f, .3f, .56f));
-            BuildPanelText(card.transform, subtitle, new Vector2(0f, 54f), new Vector2(700f, 46f), 22, new Color(.36f, .42f, .62f));
-            return panel;
+            var canvas = FindFirstObjectByType<Canvas>();
+            if (!canvas) return null;
+            var panel = canvas.transform.Find(panelName);
+            return panel ? panel.gameObject : null;
         }
 
-        Text BuildPanelText(Transform parent, string value, Vector2 position, Vector2 size, int fontSize, Color? color = null)
+        void BindDestinationButton(GameObject panel, string buttonName, string label, bool disabled, Action clicked)
         {
-            var objectText = new GameObject(value + "Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(Text));
-            objectText.transform.SetParent(parent, false);
-            var rect = objectText.GetComponent<RectTransform>(); rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f); rect.anchoredPosition = position; rect.sizeDelta = size;
-            var text = objectText.GetComponent<Text>(); text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"); text.text = value; text.fontSize = fontSize;
-            text.alignment = TextAnchor.MiddleCenter; text.color = color ?? new Color(.3f, .36f, .58f); text.raycastTarget = false;
-            return text;
-        }
-
-        void BuildPanelButton(Transform parent, string objectName, string title, Vector2 position, Action clicked, bool disabled = false)
-        {
-            var buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            buttonObject.transform.SetParent(parent, false);
-            var rect = buttonObject.GetComponent<RectTransform>(); rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f); rect.anchoredPosition = position; rect.sizeDelta = new Vector2(240f, 58f);
-            var image = buttonObject.GetComponent<Image>(); image.color = disabled ? new Color(.55f, .6f, .68f, 1f) : new Color(.42f, .65f, .9f, 1f);
-            var button = buttonObject.GetComponent<Button>(); button.interactable = !disabled; button.onClick.AddListener(() => clicked?.Invoke());
+            var buttonTransform = panel.transform.Find("Card/" + buttonName);
+            if (!buttonTransform) return;
+            var button = buttonTransform.GetComponent<Button>();
+            if (!button) return;
+            button.interactable = !disabled;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(() => clicked?.Invoke());
             button.onClick.AddListener(MenuSettingsAudioMockup.PlayButton);
-            BuildPanelText(buttonObject.transform, title, Vector2.zero, new Vector2(230f, 50f), 20, Color.white);
+            var text = button.GetComponentInChildren<Text>(true);
+            if (text) text.text = label;
         }
 
         IEnumerator TravelSequence(MenuDestination destination, bool returning)

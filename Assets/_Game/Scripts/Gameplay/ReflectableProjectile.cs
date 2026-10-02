@@ -115,6 +115,10 @@ namespace Reflectable
             if (incoming.sqrMagnitude < .001f)
                 return;
 
+            var otherProjectile = hit.collider.GetComponentInParent<ReflectableProjectile>();
+            if (otherProjectile && otherProjectile != this && GetInstanceID() < otherProjectile.GetInstanceID())
+                MenuSettingsAudioMockup.PlayBallCollision();
+
             var normal = GetImpactNormal(hit, incoming);
             var block = hit.collider.GetComponentInParent<ReflectableBlockView>();
             if (block && contactedBlocks.Add(block.GetInstanceID()))

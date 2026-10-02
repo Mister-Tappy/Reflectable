@@ -19,6 +19,10 @@ namespace Reflectable
         AudioSource musicSource;
         AudioSource sfxSource;
         AudioClip impactClip, shotClip, comboClip, buttonClip;
+        AudioClip blockBreakClip, damageHitClip;
+        AudioClip mainMenuMusicClip, inGameMusicClip;
+        AudioClip[] ballCollisionClips;
+        int lastButtonFrame = -1;
 
         public static float MusicVolume => Mathf.Clamp01(PlayerPrefs.GetFloat(MusicKey, .65f));
         public static float SfxVolume => Mathf.Clamp01(PlayerPrefs.GetFloat(SfxKey, .8f));
@@ -73,15 +77,19 @@ namespace Reflectable
                 float p=t/d;
                 return Mathf.Sin(2*Mathf.PI*Mathf.Lerp(740f,430f,p)*t)*Mathf.Exp(-p*4.2f)*.48f;
             });
-            musicSource.clip = CreateClip("Mockup_MenuMusic", 12f, true, (t,d) =>
+            buttonClip = Resources.Load<AudioClip>("SFX/Click") ?? buttonClip;
+            blockBreakClip = Resources.Load<AudioClip>("SFX/BlockBreak");
+            damageHitClip = Resources.Load<AudioClip>("SFX/damagehit");
+            ballCollisionClips = new[]
             {
-                float[] roots={130.81f,110f,174.61f,146.83f};
-                float root=roots[Mathf.FloorToInt(t/3f)%4];
-                float pad=Mathf.Sin(2*Mathf.PI*root*t)*.42f+Mathf.Sin(2*Mathf.PI*root*1.25f*t)*.22f+Mathf.Sin(2*Mathf.PI*root*1.5f*t)*.17f;
-                float beat=t%1.5f;
-                float pluck=Mathf.Exp(-beat*3.5f)*Mathf.Sin(2*Mathf.PI*root*4f*t)*.14f;
-                return (pad+pluck)*Mathf.Min(1f,Mathf.Min(t*2f,(d-t)*2f))*.22f;
-            });
+                Resources.Load<AudioClip>("SFX/hit_a"),
+                Resources.Load<AudioClip>("SFX/hit_d"),
+                Resources.Load<AudioClip>("SFX/hit_d2"),
+                Resources.Load<AudioClip>("SFX/hit_e2"),
+                Resources.Load<AudioClip>("SFX/hit_f2")
+            };
+            mainMenuMusicClip = Resources.Load<AudioClip>("SFX/Bg/mainmenuBg");
+            inGameMusicClip = Resources.Load<AudioClip>("SFX/Bg/InGameBg");
             SceneManager.sceneLoaded += SceneLoaded;
         }
 
@@ -95,15 +103,23 @@ namespace Reflectable
         void SceneLoaded(Scene scene,LoadSceneMode mode)
         {
             bool menu=scene.name=="MainMenu";
+            bool game=scene.name=="Game"||scene.name=="InGame";
             musicSource.volume=MusicVolume*.42f;
-            if(menu&&!musicSource.isPlaying)musicSource.Play();
-            else if(!menu&&musicSource.isPlaying)musicSource.Stop();
+            AudioClip sceneMusic=menu?mainMenuMusicClip:game?inGameMusicClip:null;
+            if(musicSource.clip!=sceneMusic)
+            {
+                musicSource.Stop();
+                musicSource.clip=sceneMusic;
+            }
+            if(sceneMusic&&!musicSource.isPlaying)musicSource.Play();
+            else if(!sceneMusic&&musicSource.isPlaying)musicSource.Stop();
 
-            GameObject settings=null,main=null;
+            GameObject settings=null,pauseSettings=null,main=null;
             foreach(var root in scene.GetRootGameObjects())
                 foreach(var item in root.GetComponentsInChildren<Transform>(true))
                 {
                     if(item.name=="SettingsPanel")settings=item.gameObject;
+                    else if(item.name=="PauseSettingsPanel")pauseSettings=item.gameObject;
                     else if(item.name=="MainMenuPanel")main=item.gameObject;
                 }
             if(menu&&settings)
@@ -112,7 +128,13 @@ namespace Reflectable
                 if(!ui)ui=settings.AddComponent<MenuSettingsPanel>();
                 ui.Build(main);
             }
-            if(menu)
+            if(game&&pauseSettings)
+            {
+                var ui=pauseSettings.GetComponent<MenuSettingsPanel>();
+                if(!ui)ui=pauseSettings.AddComponent<MenuSettingsPanel>();
+                ui.Build(null);
+            }
+            if(menu || game)
                 foreach(var root in scene.GetRootGameObjects())
                     foreach(var button in root.GetComponentsInChildren<Button>(true))
                         button.onClick.AddListener(PlayButton);
@@ -121,7 +143,20 @@ namespace Reflectable
         public static void PlayImpact()=>Play(instance?instance.impactClip:null,.72f);
         public static void PlayBallShot()=>Play(instance?instance.shotClip:null,.55f);
         public static void PlayHighCombo()=>Play(instance?instance.comboClip:null,.85f);
-        public static void PlayButton()=>Play(instance?instance.buttonClip:null,.55f);
+        public static void PlayBlockBreak()=>Play(instance?instance.blockBreakClip:null,.8f);
+        public static void PlayDamageHit()=>Play(instance?instance.damageHitClip:null,.9f);
+        public static void PlayBallCollision()
+        {
+            if(!instance||instance.ballCollisionClips==null||instance.ballCollisionClips.Length==0)return;
+            var clip=instance.ballCollisionClips[UnityEngine.Random.Range(0,instance.ballCollisionClips.Length)];
+            Play(clip,.75f);
+        }
+        public static void PlayButton()
+        {
+            if(!instance||instance.lastButtonFrame==Time.frameCount)return;
+            instance.lastButtonFrame=Time.frameCount;
+            Play(instance.buttonClip,.55f);
+        }
         static void Play(AudioClip clip,float gain)
         {
             if(instance&&instance.sfxSource&&clip&&SfxVolume>.001f)instance.sfxSource.PlayOneShot(clip,gain*SfxVolume);
@@ -161,22 +196,32 @@ namespace Reflectable
 
         public void Build(GameObject mainMenuPanel)
         {
+            mainPanel=mainMenuPanel;
+            Transform existingCard=null;
+            foreach(var child in GetComponentsInChildren<Transform>(true))
+                if(child.name=="SettingsCard"){existingCard=child;break;}
+            if(existingCard)
+            {
+                built=true;
+                BindExistingCard(existingCard);
+                return;
+            }
             if(built)return;
-            built=true;mainPanel=mainMenuPanel;
+            built=true;
             Font font=Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             var card=new GameObject("SettingsCard",typeof(RectTransform),typeof(CanvasRenderer),typeof(Image));
             card.transform.SetParent(transform,false);
             var cardRect=card.GetComponent<RectTransform>();
             cardRect.anchorMin=cardRect.anchorMax=new Vector2(.5f,.5f);
             cardRect.anchoredPosition=Vector2.zero;cardRect.sizeDelta=new Vector2(840,790);
-            float uiScale=Mathf.Min(1f,Screen.height/900f,Screen.width/1000f);
+            float uiScale=Application.isPlaying?Mathf.Min(1f,Screen.height/900f,Screen.width/1000f):1f;
             cardRect.localScale=Vector3.one*Mathf.Max(.62f,uiScale);
             card.GetComponent<Image>().color=new Color(.035f,.055f,.11f,.97f);
             AddText(card.transform,font,"SETTINGS",new Vector2(0,345),new Vector2(700,52),36,TextAnchor.MiddleCenter,Color.white);
             AddText(card.transform,font,"DISPLAY  ·  AUDIO  ·  GAME FEEL",new Vector2(0,306),new Vector2(700,32),17,TextAnchor.MiddleCenter,new Color(.55f,.87f,1));
 
             int resolution=Mathf.Clamp(PlayerPrefs.GetInt("Reflectable.ResolutionIndex",2),0,Resolutions.Length-1);
-            ApplyResolution(resolution);
+            if(Application.isPlaying)ApplyResolution(resolution);
             AddSlider(card.transform,font,"DISPLAY RESOLUTION",new Vector2(0,250),resolution,0,Resolutions.Length-1,true,
                 value=>
                 {
@@ -200,7 +245,7 @@ namespace Reflectable
             {
                 MenuSettingsAudioMockup.SetFullscreen(!MenuSettingsAudioMockup.Fullscreen);
                 if(fullscreenLabel)fullscreenLabel.text="FULLSCREEN: "+(MenuSettingsAudioMockup.Fullscreen?"ON":"OFF");
-            },300);
+            },300,"FullscreenButton");
             Text qualityLabel = null;
             qualityLabel = AddButton(card.transform,font,"QUALITY: "+CurrentQualityName(),new Vector2(165,-248),()=>
             {
@@ -208,13 +253,91 @@ namespace Reflectable
                 if(count==0)return;
                 MenuSettingsAudioMockup.SetGraphicsQuality((MenuSettingsAudioMockup.GraphicsQualityIndex+1)%count);
                 if(qualityLabel)qualityLabel.text="QUALITY: "+CurrentQualityName();
-            },300);
+            },300,"QualityButton");
             AddButton(card.transform,font,"DONE",new Vector2(0,-342),()=>
             {
                 var menu=FindFirstObjectByType<ReflectableMenuController>();
                 if(menu)menu.ReturnFromSettings();
                 else {gameObject.SetActive(false);if(mainPanel)mainPanel.SetActive(true);}
-            },220);
+            },220,"DoneButton");
+        }
+
+        void BindExistingCard(Transform card)
+        {
+            int resolution=Mathf.Clamp(PlayerPrefs.GetInt("Reflectable.ResolutionIndex",2),0,Resolutions.Length-1);
+            if(Application.isPlaying)ApplyResolution(resolution);
+            BindSlider(card,"DISPLAYRESOLUTIONSlider","DISPLAYRESOLUTIONValue",resolution,0,Resolutions.Length-1,true,
+                value=>
+                {
+                    int i=Mathf.Clamp(Mathf.RoundToInt(value),0,Resolutions.Length-1);
+                    PlayerPrefs.SetInt("Reflectable.ResolutionIndex",i);PlayerPrefs.Save();
+                    ApplyResolution(i);
+                },
+                value=>{var r=Resolutions[Mathf.Clamp(Mathf.RoundToInt(value),0,Resolutions.Length-1)];return r.x+" × "+r.y;});
+            BindSlider(card,"MASTERVOLUMESlider","MASTERVOLUMEValue",MenuSettingsAudioMockup.MasterVolume,0,1,false,
+                MenuSettingsAudioMockup.SetMasterVolume,v=>Mathf.RoundToInt(v*100)+"%");
+            BindSlider(card,"MUSICVOLUMESlider","MUSICVOLUMEValue",MenuSettingsAudioMockup.MusicVolume,0,1,false,
+                MenuSettingsAudioMockup.SetMusicVolume,v=>Mathf.RoundToInt(v*100)+"%");
+            BindSlider(card,"SFXVOLUMESlider","SFXVOLUMEValue",MenuSettingsAudioMockup.SfxVolume,0,1,false,
+                MenuSettingsAudioMockup.SetSfxVolume,v=>Mathf.RoundToInt(v*100)+"%");
+            BindSlider(card,"SCREENSHAKEINTENSITYSlider","SCREENSHAKEINTENSITYValue",MenuSettingsAudioMockup.ScreenShakeIntensity,0,1,false,
+                MenuSettingsAudioMockup.SetScreenShakeIntensity,v=>Mathf.RoundToInt(v*100)+"%");
+            BindSlider(card,"CAMERASENSITIVITYSlider","CAMERASENSITIVITYValue",MenuSettingsAudioMockup.CameraSensitivity,0,1,false,
+                MenuSettingsAudioMockup.SetCameraSensitivity,v=>Mathf.RoundToInt(v*100)+"%");
+
+            BindButton(card,"FullscreenButton",button=>
+            {
+                MenuSettingsAudioMockup.SetFullscreen(!MenuSettingsAudioMockup.Fullscreen);
+                SetButtonLabel(button,"FULLSCREEN: "+(MenuSettingsAudioMockup.Fullscreen?"ON":"OFF"));
+            });
+            BindButton(card,"QualityButton",button=>
+            {
+                int count=QualitySettings.names.Length;
+                if(count==0)return;
+                MenuSettingsAudioMockup.SetGraphicsQuality((MenuSettingsAudioMockup.GraphicsQualityIndex+1)%count);
+                SetButtonLabel(button,"QUALITY: "+CurrentQualityName());
+            });
+            BindButton(card,"DoneButton",_=>
+            {
+                var game=FindFirstObjectByType<ReflectableGameController>();
+                if(game){game.ClosePauseSettings();return;}
+                var menu=FindFirstObjectByType<ReflectableMenuController>();
+                if(menu)menu.ReturnFromSettings();
+                else {gameObject.SetActive(false);if(mainPanel)mainPanel.SetActive(true);}
+            });
+        }
+
+        static void BindSlider(Transform card,string sliderName,string valueName,float value,float min,float max,bool whole,Action<float> changed,Func<float,string> format)
+        {
+            var sliderTransform=card.Find(sliderName);
+            if(!sliderTransform)return;
+            var slider=sliderTransform.GetComponent<Slider>();
+            if(!slider)return;
+            slider.minValue=min;slider.maxValue=max;slider.wholeNumbers=whole;slider.SetValueWithoutNotify(value);
+            var readout=card.Find(valueName)?.GetComponent<Text>();
+            if(readout)readout.text=format(value);
+            slider.onValueChanged.RemoveAllListeners();
+            slider.onValueChanged.AddListener(v=>
+            {
+                if(readout)readout.text=format(v);
+                changed(v);
+            });
+        }
+
+        static void BindButton(Transform card,string buttonName,Action<Button> clicked)
+        {
+            var buttonTransform=card.Find(buttonName);
+            if(!buttonTransform)return;
+            var button=buttonTransform.GetComponent<Button>();
+            if(!button)return;
+            button.onClick.RemoveAllListeners();
+            button.onClick.AddListener(()=>clicked(button));
+        }
+
+        static void SetButtonLabel(Button button,string value)
+        {
+            var label=button.GetComponentInChildren<Text>(true);
+            if(label)label.text=value;
         }
 
         static string CurrentQualityName(){var names=QualitySettings.names;return names.Length==0?"DEFAULT":names[MenuSettingsAudioMockup.GraphicsQualityIndex];}
@@ -227,9 +350,12 @@ namespace Reflectable
 
         static void AddSlider(Transform parent,Font font,string title,Vector2 position,float value,float min,float max,bool whole,Action<float> changed,Func<float,string> format)
         {
-            AddText(parent,font,title,position+new Vector2(-310,28),new Vector2(430,30),20,TextAnchor.MiddleLeft,new Color(.88f,.93f,1));
+            string key=SettingKey(title);
+            var titleText=AddText(parent,font,title,position+new Vector2(-310,28),new Vector2(430,30),20,TextAnchor.MiddleLeft,new Color(.88f,.93f,1));
+            titleText.gameObject.name=key+"Title";
             Text readout=AddText(parent,font,format(value),position+new Vector2(295,28),new Vector2(180,30),20,TextAnchor.MiddleRight,new Color(.45f,.88f,1));
-            var go=new GameObject(title+"Slider",typeof(RectTransform),typeof(Slider));go.transform.SetParent(parent,false);
+            readout.gameObject.name=key+"Value";
+            var go=new GameObject(key+"Slider",typeof(RectTransform),typeof(Slider));go.transform.SetParent(parent,false);
             var rect=go.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f);rect.anchoredPosition=position+new Vector2(0,-6);rect.sizeDelta=new Vector2(620,24);
             var track=NewImage("Track",go.transform,new Color(.12f,.18f,.29f,1));
             track.raycastTarget=true;
@@ -255,13 +381,20 @@ namespace Reflectable
             var text=go.GetComponent<Text>();text.font=font;text.text=value;text.fontSize=fontSize;text.alignment=align;text.color=color;text.raycastTarget=false;return text;
         }
 
-        static Text AddButton(Transform parent,Font font,string title,Vector2 position,Action clicked,float width=220)
+        static Text AddButton(Transform parent,Font font,string title,Vector2 position,Action clicked,float width=220,string objectName=null)
         {
-            var go=new GameObject(title+"Button",typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Button));go.transform.SetParent(parent,false);
+            var go=new GameObject(string.IsNullOrEmpty(objectName)?title+"Button":objectName,typeof(RectTransform),typeof(CanvasRenderer),typeof(Image),typeof(Button));go.transform.SetParent(parent,false);
             var rect=go.GetComponent<RectTransform>();rect.anchorMin=rect.anchorMax=new Vector2(.5f,.5f);rect.anchoredPosition=position;rect.sizeDelta=new Vector2(width,56);
             go.GetComponent<Image>().color=new Color(.12f,.58f,.82f,1);
             var button=go.GetComponent<Button>();button.onClick.AddListener(()=>clicked());
             return AddText(go.transform,font,title,Vector2.zero,new Vector2(width-10,48),22,TextAnchor.MiddleCenter,Color.white);
+        }
+
+        static string SettingKey(string title)
+        {
+            var key=new System.Text.StringBuilder(title.Length);
+            foreach(char character in title)if(char.IsLetterOrDigit(character))key.Append(char.ToUpperInvariant(character));
+            return key.ToString();
         }
     }
 }

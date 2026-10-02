@@ -1,0 +1,650 @@
+fileFormatVersion: 2
+guid: 13fc182e64871b54586eb4dfeb3d2d38
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -831953533555122849
+    second: ExitIsland_0
+  - first:
+      213: -8225656397306726233
+    second: ExitIsland_1
+  - first:
+      213: 3766251936910726017
+    second: ExitIsland_2
+  - first:
+      213: 1286495842164394855
+    second: ExitIsland_3
+  - first:
+      213: -7002102917228672894
+    second: ExitIsland_4
+  - first:
+      213: -3268073488147460941
+    second: ExitIsland_5
+  - first:
+      213: -239707547554090474
+    second: ExitIsland_6
+  - first:
+      213: -8332280504444949666
+    second: ExitIsland_7
+  - first:
+      213: 8322583519511086195
+    second: ExitIsland_8
+  - first:
+      213: 1668776546531498287
+    second: ExitIsland_9
+  - first:
+      213: 7067440494503315637
+    second: ExitIsland_10
+  - first:
+      213: 6941986240883970165
+    second: ExitIsland_11
+  - first:
+      213: -7083234861927885134
+    second: ExitIsland_12
+  - first:
+      213: 5310850528725301470
+    second: ExitIsland_13
+  - first:
+      213: -2872852450043368928
+    second: ExitIsland_14
+  - first:
+      213: -892446950336422224
+    second: ExitIsland_15
+  - first:
+      213: 1756218091923448104
+    second: ExitIsland_16
+  - first:
+      213: -7821781657950957880
+    second: ExitIsland_17
+  - first:
+      213: 5897666425676150988
+    second: ExitIsland_18
+  - first:
+      213: -5092324305355584901
+    second: ExitIsland_19
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ExitIsland_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 357
+        width: 227
+        height: 551
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f5dd0da4bae4474f0800000000000000
+      internalID: -831953533555122849
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_1
+      rect:
+        serializedVersion: 2
+        x: 18
+        y: 0
+        width: 1516
+        height: 1024
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a8fc1a861998dd80800000000000000
+      internalID: -8225656397306726233
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_2
+      rect:
+        serializedVersion: 2
+        x: 214
+        y: 847
+        width: 11
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 183d032ae2a644430800000000000000
+      internalID: 3766251936910726017
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_3
+      rect:
+        serializedVersion: 2
+        x: 1456
+        y: 689
+        width: 7
+        height: 7
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 76bc93df62d8ad110800000000000000
+      internalID: 1286495842164394855
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_4
+      rect:
+        serializedVersion: 2
+        x: 1446
+        y: 652
+        width: 9
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 288cbd9de7883de90800000000000000
+      internalID: -7002102917228672894
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_5
+      rect:
+        serializedVersion: 2
+        x: 1432
+        y: 625
+        width: 39
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3bc491f3a7875a2d0800000000000000
+      internalID: -3268073488147460941
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_6
+      rect:
+        serializedVersion: 2
+        x: 78
+        y: 585
+        width: 15
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 612fe0a61436cacf0800000000000000
+      internalID: -239707547554090474
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_7
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 545
+        width: 9
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5b65ab070bcd5c80800000000000000
+      internalID: -8332280504444949666
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_8
+      rect:
+        serializedVersion: 2
+        x: 94
+        y: 533
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3748af5bd91cf7370800000000000000
+      internalID: 8322583519511086195
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_9
+      rect:
+        serializedVersion: 2
+        x: 84
+        y: 485
+        width: 17
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f2953817d6fa82710800000000000000
+      internalID: 1668776546531498287
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_10
+      rect:
+        serializedVersion: 2
+        x: 176
+        y: 498
+        width: 21
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5b8c4125fa7941260800000000000000
+      internalID: 7067440494503315637
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_11
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 470
+        width: 5
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 570d983b4b3e65060800000000000000
+      internalID: 6941986240883970165
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_12
+      rect:
+        serializedVersion: 2
+        x: 62
+        y: 471
+        width: 19
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2b61022fb6b43bd90800000000000000
+      internalID: -7083234861927885134
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_13
+      rect:
+        serializedVersion: 2
+        x: 1428
+        y: 351
+        width: 29
+        height: 25
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ed8fdd3fa6ee3b940800000000000000
+      internalID: 5310850528725301470
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_14
+      rect:
+        serializedVersion: 2
+        x: 1446
+        y: 325
+        width: 7
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 02aed0feae39128d0800000000000000
+      internalID: -2872852450043368928
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_15
+      rect:
+        serializedVersion: 2
+        x: 230
+        y: 303
+        width: 13
+        height: 13
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 0be11502a346d93f0800000000000000
+      internalID: -892446950336422224
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_16
+      rect:
+        serializedVersion: 2
+        x: 1482
+        y: 158
+        width: 7
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 821263dbc075f5810800000000000000
+      internalID: 1756218091923448104
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_17
+      rect:
+        serializedVersion: 2
+        x: 1487
+        y: 149
+        width: 6
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8ceca2f0603737390800000000000000
+      internalID: -7821781657950957880
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_18
+      rect:
+        serializedVersion: 2
+        x: 1488
+        y: 135
+        width: 11
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cc8bc22fd58b8d150800000000000000
+      internalID: 5897666425676150988
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ExitIsland_19
+      rect:
+        serializedVersion: 2
+        x: 1472
+        y: 103
+        width: 15
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b7a413a460e6459b0800000000000000
+      internalID: -5092324305355584901
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      ExitIsland_0: -831953533555122849
+      ExitIsland_1: -8225656397306726233
+      ExitIsland_10: 7067440494503315637
+      ExitIsland_11: 6941986240883970165
+      ExitIsland_12: -7083234861927885134
+      ExitIsland_13: 5310850528725301470
+      ExitIsland_14: -2872852450043368928
+      ExitIsland_15: -892446950336422224
+      ExitIsland_16: 1756218091923448104
+      ExitIsland_17: -7821781657950957880
+      ExitIsland_18: 5897666425676150988
+      ExitIsland_19: -5092324305355584901
+      ExitIsland_2: 3766251936910726017
+      ExitIsland_3: 1286495842164394855
+      ExitIsland_4: -7002102917228672894
+      ExitIsland_5: -3268073488147460941
+      ExitIsland_6: -239707547554090474
+      ExitIsland_7: -8332280504444949666
+      ExitIsland_8: 8322583519511086195
+      ExitIsland_9: 1668776546531498287
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
