@@ -5,6 +5,35 @@ namespace Reflectable
 {
     public enum ArcadeHitKind { Direct, Beam, Splash, Burn, Explosion, Chain }
 
+    public enum ImpactIntensity { Light, Normal, Heavy, Critical }
+
+    public struct ImpactData
+    {
+        public Vector3 position;
+        public Vector2 direction;
+        public float speed;
+        public int combo;
+        public bool destroyed;
+        public bool critical;
+
+        public ImpactData(Vector3 position, Vector2 direction, float speed, int combo, bool destroyed, bool critical)
+        {
+            this.position = position;
+            this.direction = direction;
+            this.speed = speed;
+            this.combo = combo;
+            this.destroyed = destroyed;
+            this.critical = critical;
+        }
+
+        public ImpactIntensity Intensity(float heavySpeed)
+        {
+            if (critical) return ImpactIntensity.Critical;
+            if (destroyed || speed >= heavySpeed || combo >= 10) return ImpactIntensity.Heavy;
+            return combo >= 2 ? ImpactIntensity.Normal : ImpactIntensity.Light;
+        }
+    }
+
     public sealed class ArcadeSpriteFx : MonoBehaviour
     {
         SpriteRenderer spriteRenderer;

@@ -9,11 +9,13 @@ namespace Reflectable
         [SerializeField] Camera gameCamera;
         [SerializeField] Text comboLabel;
         Vector3 cameraBase;
+        float cameraBaseSize = 5f;
         Coroutine shake;
 
         void Awake() => InitializeArcadeFeedback();
         public void Hit(int combo) => Hit(combo, Vector3.zero, 0, false, ArcadeHitKind.Direct, false);
         public void Shake(float strength,float duration) => StartArcadeShake(strength, duration);
+        public void CancelTimeEffects() => StopArcadeTimeEffects(true);
         IEnumerator ShakeRoutine(float strength,float duration){if(!gameCamera)yield break;for(float t=0;t<duration;t+=Time.unscaledDeltaTime){gameCamera.transform.localPosition=cameraBase+(Vector3)Random.insideUnitCircle*strength;yield return null;}if(gameCamera)gameCamera.transform.localPosition=cameraBase;shake=null;}
     }
 }

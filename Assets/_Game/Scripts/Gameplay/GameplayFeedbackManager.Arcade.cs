@@ -11,6 +11,8 @@ namespace Reflectable
     {
         const int ShockwavePoolSize = 32;
         const int DebrisPoolSize = 96;
+        const int ShardPoolSize = 72;
+        const int CoreFlashPoolSize = 12;
         const int PopupPoolSize = 48;
         const int BeamPoolSize = 16;
         const int UiParticlePoolSize = 80;
@@ -21,6 +23,10 @@ namespace Reflectable
         [SerializeField] Transform damageNumberLayer;
         [SerializeField] ComboOrbController comboOrb;
         [SerializeField] ComboWorldReactionController worldReaction;
+        [Header("Impact tuning")]
+        [SerializeField, Min(1f)] float heavyImpactSpeed = 15f;
+        [SerializeField, Range(.01f, .1f)] float criticalHitStop = .035f;
+        [SerializeField, Range(.02f, .2f)] float climaxCameraPunch = .07f;
         [System.NonSerialized] AudioSource voiceSource;
         [System.NonSerialized] AudioClip combo30Voice;
         [System.NonSerialized] AudioClip combo100Voice;
@@ -30,6 +36,8 @@ namespace Reflectable
         readonly Dictionary<SpriteRenderer, Color> stageColors = new Dictionary<SpriteRenderer, Color>();
         ArcadeSpriteFx[] shockwaves;
         ArcadeSpriteFx[] debris;
+        ArcadeSpriteFx[] crystalShards;
+        ArcadeSpriteFx[] coreFlashes;
         ArcadeTextFx[] popups;
         ArcadeBeamFx[] beams;
         ArcadeUiParticle[] uiParticles;
@@ -45,6 +53,7 @@ namespace Reflectable
         ComboPresentationController comboPresentation;
         Sprite circleSprite;
         Sprite ringSprite;
+        Sprite crystalShardSprite;
         Material additiveMaterial;
         Material uiAdditiveMaterial;
         Material lineMaterial;
@@ -57,11 +66,14 @@ namespace Reflectable
         Coroutine comboBreak;
         Coroutine announceRoutine;
         Coroutine hitStopRoutine;
+        Coroutine cameraPunchRoutine;
         int shockwaveCursor;
         int popupCursor;
         int beamCursor;
         int uiCursor;
         int energyCursor;
+        int shardCursor;
+        int coreFlashCursor;
         int currentCombo;
         int lastAnnouncedMilestone;
         float fireTimer;
@@ -69,6 +81,8 @@ namespace Reflectable
         float characterSparkTimer;
         float nextImpactShakeTime;
         float queuedImpactShake;
+        float hitStopUntil, hitStopRestoreScale = 1f;
+        bool hitStopTailRequested;
         bool arcadeInitialized;
         ArcadeEffectQuality? previewQuality;
 
@@ -113,6 +127,7 @@ namespace Reflectable
             }
 
             cameraBase = gameCamera.transform.localPosition;
+            cameraBaseSize = gameCamera.orthographicSize;
             BuildRuntimeAssets();
             BuildPools();
             comboPresentation = FindFirstObjectByType<ComboPresentationController>(FindObjectsInactive.Include);
@@ -140,8 +155,15 @@ namespace Reflectable
             UpdateCharacterSparks();
         }
 
-        public void Hit(int combo, Vector3 position, int damage, bool critical, ArcadeHitKind kind, bool destroyed)
+        public void Hit(int combo, Vector3 position, int damage, bool critical, ArcadeHitKind kind, bool destroyed) =>
+            Hit(new ImpactData(position, Vector2.zero, 0f, combo, destroyed, critical), damage, kind);
+
+        public void Hit(ImpactData impact, int damage, ArcadeHitKind kind)
         {
+            int combo = impact.combo;
+            Vector3 position = impact.position;
+            bool critical = impact.critical;
+            bool destroyed = impact.destroyed;
             MenuSettingsAudioMockup.PlayImpact();
             if (comboBreak != null) { StopCoroutine(comboBreak); comboBreak = null; }
             currentCombo = Mathf.Max(0, combo);
@@ -174,13 +196,16 @@ namespace Reflectable
             Color hitColor = HitColor(kind, critical);
             if (!critical && kind == ArcadeHitKind.Direct && feedbackConfig)
                 hitColor = currentCombo >= 1000 ? RainbowColor(Time.unscaledTime) : feedbackConfig.TierFor(currentCombo).primaryColor;
+            ImpactIntensity impactIntensity = impact.Intensity(heavyImpactSpeed);
+            bool heavyImpact = (int)impactIntensity >= (int)ImpactIntensity.Heavy;
             EmitImpact(
                 position,
                 hitColor,
-                critical || destroyed,
+                heavyImpact,
                 kind,
                 feedbackConfig ? feedbackConfig.impactSparkAmount : 8,
-                feedbackConfig ? feedbackConfig.hitShockwaveScale : .36f);
+                feedbackConfig ? feedbackConfig.hitShockwaveScale : .36f,
+                impact.direction);
             if (damage > 0) Popup(position, damage, hitColor, critical, kind);
             PulseNearestProjectile(position, feedbackConfig ? feedbackConfig.projectileHitPulseScale : 1.08f);
             RequestImpactShake(
@@ -201,8 +226,10 @@ namespace Reflectable
             if (milestoneHit && milestone.characterCutIn) PlayCharacterVoice(currentCombo);
             if (milestoneHit && milestone.cameraShake > 0f) Shake(milestone.cameraShake, .09f);
             float baseFlash = feedbackConfig ? feedbackConfig.impactFlashStrength : .045f;
-            Flash(hitColor, Mathf.Lerp(baseFlash, baseFlash * 2.4f, intensity) * (critical || destroyed ? 1.55f : 1f));
-            if (milestoneHit && milestone.hitStop > 0f) HitStop(milestone.hitStop, false);
+            Flash(hitColor, Mathf.Lerp(baseFlash, baseFlash * 2.4f, intensity) * (heavyImpact ? 1.55f : 1f));
+            if (milestoneHit && currentCombo >= 500) HitStop(Mathf.Max(milestone.hitStop, criticalHitStop), true);
+            else if (milestoneHit && milestone.hitStop > 0f) HitStop(milestone.hitStop, false);
+            else if (impactIntensity == ImpactIntensity.Critical) HitStop(criticalHitStop, false);
             if (!comboPresentation) CheckAnnouncement(currentCombo);
             CheckVoiceCue(currentCombo);
             if (milestoneHit && currentCombo >= 500) TriggerSpectacle(position);
@@ -250,10 +277,44 @@ namespace Reflectable
             Flash(color, .08f + ComboIntensity(combo) * .09f);
         }
 
+        public void Destroyed(ReflectableBlockView block, int combo, ArcadeHitKind kind)
+        {
+            if (!block) return;
+            Vector3 position = block.transform.position;
+            var renderer = block.GetComponentInChildren<SpriteRenderer>();
+            Color color = renderer ? renderer.color : HitColor(kind, false);
+            float blockScale = block.transform.Find("Visual") ? block.transform.Find("Visual").localScale.x : 1f;
+            Destroyed(position, combo, kind);
+            int count = block.Type == ReflectableBlockType.Boss ? 28 : block.Type == ReflectableBlockType.Elite || block.Type == ReflectableBlockType.Anchor ? 18 : 12;
+            count += Mathf.Clamp(block.MaxHP / 120, 0, 10);
+            if (EffectQuality == ArcadeEffectQuality.Low) count = Mathf.Max(5, count / 2);
+            else if (EffectQuality == ArcadeEffectQuality.Medium) count = Mathf.RoundToInt(count * .72f);
+            float speed = block.Type == ReflectableBlockType.Boss ? 4.8f : 3.4f;
+            for (int i = 0; i < count; i++)
+            {
+                Vector2 direction = Random.insideUnitCircle.normalized;
+                direction.y = Mathf.Abs(direction.y) + .18f;
+                crystalShards[shardCursor++ % crystalShards.Length].Play(
+                    position,
+                    Color.Lerp(color, Color.white, Random.Range(.18f, .58f)),
+                    Random.Range(.09f, .19f) * Mathf.Clamp(blockScale, .8f, 2f),
+                    direction.normalized * Random.Range(speed * .38f, speed),
+                    Random.Range(-540f, 540f),
+                    Random.Range(.38f, .72f),
+                    false);
+            }
+        }
+
         public void Ricochet(Vector3 position, int combo)
+            => Ricochet(position, combo, Vector2.zero, 0f);
+
+        public void Ricochet(Vector3 position, int combo, Vector2 direction, float speed)
         {
             Color color = combo >= 200 ? RainbowColor(Time.unscaledTime * .5f) : new Color(.55f, .88f, 1f, 1f);
-            EmitSparks(position, color, 4 + Mathf.Min(8, combo / 30), 2.3f);
+            int count = speed >= heavyImpactSpeed ? 8 : 3 + Mathf.Min(5, combo / 40);
+            EmitSparks(position, color, count, speed >= heavyImpactSpeed ? 3.6f : 2.3f, direction);
+            if (coreFlashes != null && coreFlashes.Length > 0)
+                coreFlashes[coreFlashCursor++ % coreFlashes.Length].Play(position, Color.Lerp(color, Color.white, .5f), speed >= heavyImpactSpeed ? .18f : .11f, Vector3.zero, 0f, .08f, true);
             if (combo >= 30) Shockwave(position, color, .28f + ComboIntensity(combo) * .22f);
         }
 
@@ -355,6 +416,7 @@ namespace Reflectable
         {
             circleSprite = BuildSprite(false);
             ringSprite = BuildSprite(true);
+            crystalShardSprite = BuildCrystalShardSprite();
             var additiveShader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Sprites/Default");
             additiveMaterial = new Material(additiveShader) { name = "Runtime Arcade Additive" };
             additiveMaterial.mainTexture = circleSprite.texture;
@@ -392,6 +454,31 @@ namespace Reflectable
             return Sprite.Create(texture, new Rect(0, 0, size, size), Vector2.one * .5f, 64f);
         }
 
+        static Sprite BuildCrystalShardSprite()
+        {
+            const int size = 32;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                name = "Runtime Crystal Shard",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            var pixels = new Color[size * size];
+            Vector2 center = Vector2.one * (size - 1) * .5f;
+            for (int y = 0; y < size; y++)
+                for (int x = 0; x < size; x++)
+                {
+                    Vector2 p = new Vector2(Mathf.Abs(x - center.x) / 14f, Mathf.Abs(y - center.y) / 14f);
+                    float edge = 1f - p.x - p.y;
+                    float alpha = Mathf.SmoothStep(0f, .18f, edge);
+                    float highlight = Mathf.Clamp01(1f - Mathf.Abs(x - center.x + (y - center.y) * .35f) / 4f);
+                    pixels[y * size + x] = new Color(1f, 1f, 1f, alpha * (.72f + highlight * .28f));
+                }
+            texture.SetPixels(pixels);
+            texture.Apply(false, true);
+            return Sprite.Create(texture, new Rect(0, 0, size, size), Vector2.one * .5f, 32f);
+        }
+
         void BuildPools()
         {
             EnsurePersistentLayers();
@@ -411,6 +498,22 @@ namespace Reflectable
                 item.transform.SetParent(effectsLayer, false);
                 item.Initialize(circleSprite, lineMaterial, 501);
                 debris[i] = item;
+            }
+            crystalShards = new ArcadeSpriteFx[ShardPoolSize];
+            for (int i = 0; i < crystalShards.Length; i++)
+            {
+                var item = new GameObject("CrystalShard_" + i).AddComponent<ArcadeSpriteFx>();
+                item.transform.SetParent(effectsLayer, false);
+                item.Initialize(crystalShardSprite, lineMaterial, 502);
+                crystalShards[i] = item;
+            }
+            coreFlashes = new ArcadeSpriteFx[CoreFlashPoolSize];
+            for (int i = 0; i < coreFlashes.Length; i++)
+            {
+                var item = new GameObject("ImpactCore_" + i).AddComponent<ArcadeSpriteFx>();
+                item.transform.SetParent(effectsLayer, false);
+                item.Initialize(circleSprite, lineMaterial, 503);
+                coreFlashes[i] = item;
             }
             popups = new ArcadeTextFx[PopupPoolSize];
             for (int i = 0; i < popups.Length; i++)
@@ -672,34 +775,41 @@ namespace Reflectable
             foreach (var ghost in comboGhosts) if (ghost) ghost.color = Color.clear;
         }
 
-        void EmitImpact(Vector3 position, Color color, bool heavy, ArcadeHitKind kind, int baseSparkAmount, float baseShockwaveScale)
+        void EmitImpact(Vector3 position, Color color, bool heavy, ArcadeHitKind kind, int baseSparkAmount, float baseShockwaveScale, Vector2 direction)
         {
+            if (coreFlashes != null && coreFlashes.Length > 0)
+                coreFlashes[coreFlashCursor++ % coreFlashes.Length].Play(position, Color.Lerp(color, Color.white, .72f), heavy ? .34f : .22f, Vector3.zero, 0f, heavy ? .16f : .1f, true);
             int count = heavy ? Mathf.Max(baseSparkAmount + 8, 14) : Mathf.Max(2, baseSparkAmount);
             if (kind == ArcadeHitKind.Explosion) count += 18;
-            EmitSparks(position, color, count, heavy ? 5.5f : 3.4f);
+            EmitSparks(position, color, count, heavy ? 5.5f : 3.4f, direction);
             int fragmentCount = EffectQuality == ArcadeEffectQuality.Low ? (heavy ? 4 : 1) : EffectQuality == ArcadeEffectQuality.Medium ? (heavy ? 8 : 3) : (heavy ? 12 : 5);
             for (int i = 0; i < fragmentCount; i++)
             {
-                Vector2 direction = Random.insideUnitCircle.normalized;
+                Vector2 fragmentDirection = Random.insideUnitCircle.normalized;
                 debris[(shockwaveCursor * 13 + i) % debris.Length].Play(
                     position,
                     Color.Lerp(color, Color.white, .35f),
                     Random.Range(.08f, .18f),
-                    direction * Random.Range(1.4f, heavy ? 4.5f : 2.8f),
+                    fragmentDirection * Random.Range(1.4f, heavy ? 4.5f : 2.8f),
                     Random.Range(-480f, 480f),
                     Random.Range(.25f, .55f),
                     false);
             }
-            Shockwave(position, color, heavy ? Mathf.Max(.68f, baseShockwaveScale * 1.8f) : baseShockwaveScale);
+            Shockwave(position, color, heavy ? Mathf.Max(.68f, baseShockwaveScale * 1.8f) : Mathf.Min(.22f, baseShockwaveScale * .55f));
         }
 
         void EmitSparks(Vector3 position, Color color, int count, float speed)
+            => EmitSparks(position, color, count, speed, Vector2.zero);
+
+        void EmitSparks(Vector3 position, Color color, int count, float speed, Vector2 biasDirection)
         {
             if (!sparkSystem) return;
             count = QualityCount(count);
             for (int i = 0; i < count; i++)
             {
                 Vector2 direction = Random.insideUnitCircle.normalized;
+                if (biasDirection.sqrMagnitude > .001f)
+                    direction = Vector2.Lerp(direction, biasDirection.normalized, .32f).normalized;
                 var emit = new ParticleSystem.EmitParams
                 {
                     position = position,
@@ -785,6 +895,7 @@ namespace Reflectable
 
         void TriggerSpectacle(Vector3 origin)
         {
+            CameraPunch(climaxCameraPunch, .24f);
             Vector3 center = comboOrb && comboOrb.IsSummoned ? comboOrb.WorldPosition : origin;
             int arcs = QualityCount(currentCombo >= 1000 ? 7 : 4);
             for (int i = 0; i < arcs; i++)
@@ -946,26 +1057,77 @@ namespace Reflectable
 
         void HitStop(float duration, bool slowMotionTail = false)
         {
-            if (Time.timeScale <= 0f) return;
-            if (hitStopRoutine != null) StopCoroutine(hitStopRoutine);
-            hitStopRoutine = StartCoroutine(HitStopRoutine(duration, slowMotionTail));
+            if (duration <= 0f || Time.timeScale <= 0f) return;
+            if (hitStopRoutine == null)
+            {
+                hitStopRestoreScale = Time.timeScale;
+                hitStopUntil = Time.unscaledTime + duration;
+                hitStopTailRequested = slowMotionTail;
+                hitStopRoutine = StartCoroutine(HitStopRoutine());
+                return;
+            }
+            hitStopUntil = Mathf.Max(hitStopUntil, Time.unscaledTime + duration);
+            hitStopTailRequested |= slowMotionTail;
         }
 
-        IEnumerator HitStopRoutine(float duration, bool slowMotionTail)
+        IEnumerator HitStopRoutine()
         {
-            float restore = Time.timeScale;
-            Time.timeScale = Mathf.Min(restore, .08f);
-            yield return new WaitForSecondsRealtime(duration);
-            if (Time.timeScale > 0f && Time.timeScale <= .081f)
+            while (true)
             {
-                if (slowMotionTail)
+                while (Time.unscaledTime < hitStopUntil)
                 {
-                    Time.timeScale = Mathf.Min(restore, .35f);
-                    yield return new WaitForSecondsRealtime(.18f);
+                    if (Time.timeScale > 0f) Time.timeScale = Mathf.Min(Time.timeScale, .08f);
+                    yield return null;
                 }
-                if (Time.timeScale > 0f) Time.timeScale = restore;
+                if (hitStopTailRequested)
+                {
+                    hitStopTailRequested = false;
+                    Time.timeScale = Mathf.Min(hitStopRestoreScale, .35f);
+                    float tailEnds = Time.unscaledTime + .18f;
+                    while (Time.unscaledTime < tailEnds && Time.unscaledTime >= hitStopUntil) yield return null;
+                    if (Time.unscaledTime < hitStopUntil) continue;
+                }
+                if (Time.unscaledTime >= hitStopUntil) break;
             }
+            if (Time.timeScale > 0f && Time.timeScale <= .351f) Time.timeScale = hitStopRestoreScale;
             hitStopRoutine = null;
+            hitStopTailRequested = false;
+        }
+
+        public void StopArcadeTimeEffects(bool restoreTime)
+        {
+            if (hitStopRoutine != null) StopCoroutine(hitStopRoutine);
+            hitStopRoutine = null;
+            hitStopTailRequested = false;
+            hitStopUntil = 0f;
+            if (restoreTime && Time.timeScale > 0f && Time.timeScale <= .351f) Time.timeScale = hitStopRestoreScale;
+            if (cameraPunchRoutine != null) StopCoroutine(cameraPunchRoutine);
+            cameraPunchRoutine = null;
+            if (gameCamera) gameCamera.orthographicSize = cameraBaseSize;
+        }
+
+        void CameraPunch(float amount, float duration)
+        {
+            if (!gameCamera || !gameCamera.orthographic) return;
+            if (cameraPunchRoutine != null) StopCoroutine(cameraPunchRoutine);
+            cameraPunchRoutine = StartCoroutine(CameraPunchRoutine(Mathf.Clamp(amount, 0f, .15f), Mathf.Max(.08f, duration)));
+        }
+
+        IEnumerator CameraPunchRoutine(float amount, float duration)
+        {
+            float half = duration * .32f;
+            for (float t = 0f; t < half; t += Time.unscaledDeltaTime)
+            {
+                if (gameCamera) gameCamera.orthographicSize = cameraBaseSize * (1f - amount * Mathf.SmoothStep(0f, 1f, t / half));
+                yield return null;
+            }
+            for (float t = 0f; t < duration - half; t += Time.unscaledDeltaTime)
+            {
+                if (gameCamera) gameCamera.orthographicSize = cameraBaseSize * (1f - amount * (1f - Mathf.SmoothStep(0f, 1f, t / (duration - half))));
+                yield return null;
+            }
+            if (gameCamera) gameCamera.orthographicSize = cameraBaseSize;
+            cameraPunchRoutine = null;
         }
 
         void PlayVoice(AudioClip clip)
@@ -1032,6 +1194,7 @@ namespace Reflectable
         public void ResetArcadeEffects()
         {
             previewQuality = null;
+            StopArcadeTimeEffects(true);
             ComboEnded(currentCombo);
             if (screenFlash) screenFlash.color = Color.clear;
             if (sparkSystem) sparkSystem.Clear(true);
@@ -1065,6 +1228,7 @@ namespace Reflectable
 
         void OnDestroy()
         {
+            StopArcadeTimeEffects(true);
             ResetStageColors();
             if (runtimeProfile) Destroy(runtimeProfile);
             if (additiveMaterial) Destroy(additiveMaterial);
@@ -1080,6 +1244,12 @@ namespace Reflectable
             {
                 var texture = ringSprite.texture;
                 Destroy(ringSprite);
+                if (texture) Destroy(texture);
+            }
+            if (crystalShardSprite)
+            {
+                var texture = crystalShardSprite.texture;
+                Destroy(crystalShardSprite);
                 if (texture) Destroy(texture);
             }
         }

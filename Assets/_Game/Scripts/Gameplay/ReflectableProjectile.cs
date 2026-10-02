@@ -95,8 +95,10 @@ namespace Reflectable
             body.linearVelocity = lastVelocity;
             if (trail)
             {
-                trail.time = Mathf.Lerp(.16f, .42f, (multiplier - 1f) / 1.5f) * comboTrailTime;
-                trail.startWidth = Mathf.Lerp(.12f, .2f, (multiplier - 1f) / 1.5f) * comboTrailWidth;
+                float normalizedSpeed = Mathf.Clamp01((body.linearVelocity.magnitude / Mathf.Max(1f, speed) - .7f) / 1.8f);
+                trail.time = Mathf.Lerp(.10f, .38f, normalizedSpeed) * comboTrailTime;
+                trail.startWidth = Mathf.Lerp(.075f, .19f, normalizedSpeed) * comboTrailWidth;
+                trail.emitting = body.linearVelocity.sqrMagnitude > speed * speed * .16f;
                 trail.startColor = comboTrailStart;
                 trail.endColor = comboTrailEnd;
             }
@@ -113,9 +115,10 @@ namespace Reflectable
             if (incoming.sqrMagnitude < .001f)
                 return;
 
+            var normal = GetImpactNormal(hit, incoming);
             var block = hit.collider.GetComponentInParent<ReflectableBlockView>();
             if (block && contactedBlocks.Add(block.GetInstanceID()))
-                game.HitBlock(block, damage);
+                game.HitBlock(block, damage, true, ArcadeHitKind.Direct, hit.GetContact(0).point, incoming);
 
             if (block && starPierceRemaining > 0)
             {
@@ -125,7 +128,6 @@ namespace Reflectable
                 return;
             }
 
-            var normal = GetImpactNormal(hit, incoming);
             Reflect(incoming, normal);
             lastCollisionNormal = normal;
             var colliderId = hit.collider.GetInstanceID();
@@ -136,7 +138,7 @@ namespace Reflectable
             if (!block) StartCoroutine(VisualPulse(1.16f));
 
             if (!block)
-                game.RegisterRicochet(this);
+                game.RegisterRicochet(this, hit.GetContact(0).point, incoming);
         }
 
         void OnCollisionExit2D(Collision2D hit)
