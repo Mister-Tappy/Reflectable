@@ -20,16 +20,17 @@ MonoBehaviour:
   description: Queen of Eclipse
   passiveAbility: Every turn, gain one random temporary Power, Ricochet, Critical,
     Extra Ball, or Gem Gain buff.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: -9095713001626985458, guid: 53a4c75589656d244a3f83194c1c83a7, type: 3}
+  icon: {fileID: -9095713001626985458, guid: 53a4c75589656d244a3f83194c1c83a7, type: 3}
   prefab: {fileID: 100000, guid: c0900000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portraitPrefab: {fileID: 100000, guid: fa110000000000000000000000000007, type: 3}
+  frontSprite: {fileID: -9095713001626985458, guid: 53a4c75589656d244a3f83194c1c83a7, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 0.3, g: 0.14, b: 0.48, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: -9095713001626985458, guid: 53a4c75589656d244a3f83194c1c83a7, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: -9095713001626985458, guid: 53a4c75589656d244a3f83194c1c83a7, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: Queen of Eclipse

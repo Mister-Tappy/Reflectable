@@ -3175,7 +3175,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 4585085906914774881, guid: caf03927e6aa1924ead5b678f11f10e9, type: 3}
   m_Type: 1
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -3203,7 +3203,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2468811581715801606
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3573,7 +3573,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1234703127242929487
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3668,6 +3668,7 @@ MonoBehaviour:
   duplicateMessage: {fileID: 3685771430281059979}
   skipButton: {fileID: 8677852568848936856}
   continueButton: {fileID: 776903657654613874}
+  revealPortraitPrefab: {fileID: 100000, guid: 6f8e647837bf4754966dd2e8f1a7da10, type: 3}
 --- !u!1 &7834839426171865377
 GameObject:
   m_ObjectHideFlags: 0

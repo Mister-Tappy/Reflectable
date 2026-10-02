@@ -19,16 +19,17 @@ MonoBehaviour:
   title: Blooming Spirit
   description: Blooming Spirit
   passiveAbility: Recover a small amount of HP every few turns.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: 1035849391296185231, guid: 3c5e778ec0e96d94ab4c541eb069aee1, type: 3}
+  icon: {fileID: 1035849391296185231, guid: 3c5e778ec0e96d94ab4c541eb069aee1, type: 3}
   prefab: {fileID: 100000, guid: c0800000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portraitPrefab: {fileID: 100000, guid: fa110000000000000000000000000008, type: 3}
+  frontSprite: {fileID: 1035849391296185231, guid: 3c5e778ec0e96d94ab4c541eb069aee1, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 1, g: 0.48, b: 0.68, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: 1035849391296185231, guid: 3c5e778ec0e96d94ab4c541eb069aee1, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: 1035849391296185231, guid: 3c5e778ec0e96d94ab4c541eb069aee1, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: Blooming Spirit

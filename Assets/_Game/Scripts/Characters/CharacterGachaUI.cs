@@ -33,9 +33,13 @@ namespace Reflectable
         [SerializeField] TMP_Text duplicateMessage;
         [SerializeField] Button skipButton;
         [SerializeField] Button continueButton;
+        [SerializeField] GameObject revealPortraitPrefab;
 
         bool skipRequested;
         bool hasViewedReveal;
+        Image revealArtworkSlotImage;
+        GameObject revealPortraitInstance;
+        GameObject revealPortraitInstancePrefab;
 
         public CharacterGachaConfig Config => config;
         public Button DrawButton => drawButton;
@@ -50,6 +54,7 @@ namespace Reflectable
 
         void Awake()
         {
+            revealArtworkSlotImage = revealArtwork;
             if (skipButton) skipButton.onClick.AddListener(RequestSkip);
         }
 
@@ -163,7 +168,12 @@ namespace Reflectable
 
         void BindReveal(CharacterData data, bool duplicate, string compensationMessage)
         {
-            if (revealArtwork) { revealArtwork.sprite = BannerArt(data); revealArtwork.preserveAspect = true; }
+            BindRevealPortraitPrefab(data);
+            if (revealArtwork)
+            {
+                revealArtwork.sprite = data.portraitPrefab && data.portrait ? data.portrait : BannerArt(data);
+                revealArtwork.preserveAspect = true;
+            }
             Color color = config ? config.RarityColor(data.rarity) : data.themeColor;
             if (revealGlow) revealGlow.color = color;
             if (revealName) revealName.text = data.displayName.ToUpperInvariant();
@@ -176,6 +186,28 @@ namespace Reflectable
                     (string.IsNullOrWhiteSpace(compensationMessage) ? "" : "\n" + compensationMessage) : "";
             }
             if (statusText) statusText.text = duplicate ? "DUPLICATE SUMMON" : "NEW CHARACTER ACTIVATED";
+        }
+
+        void BindRevealPortraitPrefab(CharacterData character)
+        {
+            GameObject desiredPrefab = character && character.portraitPrefab ? character.portraitPrefab : revealPortraitPrefab;
+            if (revealPortraitInstance && revealPortraitInstancePrefab == desiredPrefab) return;
+            if (!revealArtworkSlotImage || !desiredPrefab) return;
+
+            if (revealPortraitInstance) Destroy(revealPortraitInstance);
+            GameObject instance = Instantiate(desiredPrefab, revealArtworkSlotImage.transform, false);
+            instance.name = "CharacterPortrait";
+            Image image = instance.GetComponent<Image>();
+            if (!image)
+            {
+                Destroy(instance);
+                return;
+            }
+
+            revealArtworkSlotImage.enabled = false;
+            revealPortraitInstance = instance;
+            revealPortraitInstancePrefab = desiredPrefab;
+            revealArtwork = image;
         }
 
         void SetRevealVisible(bool value)

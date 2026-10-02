@@ -19,6 +19,7 @@ namespace Reflectable
         [SerializeField] TMP_Text gemsText;
         [Header("Character")]
         [SerializeField] Image portrait;
+        [SerializeField] GameObject portraitPrefab;
         [SerializeField] Image portraitGlow;
         [SerializeField] TMP_Text characterName;
         [SerializeField] TMP_Text characterLevel;
@@ -39,6 +40,9 @@ namespace Reflectable
         int cachedStage = -1;
         string cachedStageName;
         string cachedCharacterId;
+        Image portraitSlotImage;
+        GameObject portraitInstance;
+        GameObject portraitInstancePrefab;
         Coroutine progressPulse;
         Coroutine portraitPulse;
 
@@ -48,6 +52,11 @@ namespace Reflectable
         public Button CollectionButton => collectionButton;
         public Button SkipButton => skipButton;
         public Button PauseButton => pauseButton;
+
+        void Awake()
+        {
+            portraitSlotImage = portrait;
+        }
 
         void Update()
         {
@@ -81,6 +90,7 @@ namespace Reflectable
             if (character && cachedCharacterId != character.characterId)
             {
                 cachedCharacterId = character.characterId;
+                BindPortraitPrefab(character);
                 if (portrait)
                 {
                     portrait.sprite = character.portrait ? character.portrait : character.frontSprite;
@@ -95,6 +105,28 @@ namespace Reflectable
             powerCard?.Refresh("POWER", power, power * 15, true, powerCost, canUpgrade && skillPoints >= powerCost);
             ricochetCard?.Refresh("RICOCHET", ricochet, ricochet * 4, true, ricochetCost, canUpgrade && skillPoints >= ricochetCost);
             extraBallCard?.Refresh("EXTRA BALL", extraBall, extraBall, false, extraBallCost, canUpgrade && skillPoints >= extraBallCost);
+        }
+
+        void BindPortraitPrefab(CharacterData character)
+        {
+            GameObject desiredPrefab = character && character.portraitPrefab ? character.portraitPrefab : portraitPrefab;
+            if (portraitInstance && portraitInstancePrefab == desiredPrefab) return;
+            if (!portraitSlotImage || !desiredPrefab) return;
+
+            if (portraitInstance) Destroy(portraitInstance);
+            GameObject instance = Instantiate(desiredPrefab, portraitSlotImage.transform, false);
+            instance.name = "CharacterPortrait";
+            Image image = instance.GetComponent<Image>();
+            if (!image)
+            {
+                Destroy(instance);
+                return;
+            }
+
+            portraitSlotImage.enabled = false;
+            portraitInstance = instance;
+            portraitInstancePrefab = desiredPrefab;
+            portrait = image;
         }
 
         static bool UsesBuiltinPlaceholder(Sprite sprite) =>

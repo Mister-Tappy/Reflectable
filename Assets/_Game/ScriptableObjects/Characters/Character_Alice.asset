@@ -20,16 +20,17 @@ MonoBehaviour:
   description: Radiant Oracle
   passiveAbility: Every projectile hit emits holy beams up, down, left, and right
     for 40% current projectile damage.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  prefab: {fileID: 100000, guid: c0200000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: 7764891032112233445, guid: ac0b8ce20f4a62e499bbbcb91efdf835, type: 3}
+  icon: {fileID: 7764891032112233445, guid: ac0b8ce20f4a62e499bbbcb91efdf835, type: 3}
+  prefab: {fileID: 100000, guid: a1c5b5e8fae94ac48ef1c9cb76d48711, type: 3}
+  portraitPrefab: {fileID: 100000, guid: b2d6a6f90c144bb58b3f967c08da59e2, type: 3}
+  frontSprite: {fileID: 9049539159198059528, guid: ac0b8ce20f4a62e499bbbcb91efdf835, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 1, g: 0.9, b: 0.45, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: 9049539159198059528, guid: ac0b8ce20f4a62e499bbbcb91efdf835, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: 9049539159198059528, guid: ac0b8ce20f4a62e499bbbcb91efdf835, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: Radiant Oracle

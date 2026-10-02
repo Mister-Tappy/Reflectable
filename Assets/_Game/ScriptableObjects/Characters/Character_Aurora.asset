@@ -19,16 +19,17 @@ MonoBehaviour:
   title: Northern Light
   description: Northern Light
   passiveAbility: Critical Chance +20%. Critical Damage is increased.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: -5267938533852694876, guid: 37c49459039d4984aa160b6a7d4a7fdb, type: 3}
+  icon: {fileID: -5267938533852694876, guid: 37c49459039d4984aa160b6a7d4a7fdb, type: 3}
   prefab: {fileID: 100000, guid: c0500000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portraitPrefab: {fileID: 100000, guid: fa110000000000000000000000000001, type: 3}
+  frontSprite: {fileID: -5267938533852694876, guid: 37c49459039d4984aa160b6a7d4a7fdb, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 0.58, g: 0.36, b: 0.95, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: -5267938533852694876, guid: 37c49459039d4984aa160b6a7d4a7fdb, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: -5267938533852694876, guid: 37c49459039d4984aa160b6a7d4a7fdb, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: Northern Light

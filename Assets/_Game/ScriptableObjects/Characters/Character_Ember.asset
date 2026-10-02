@@ -19,16 +19,17 @@ MonoBehaviour:
   title: Crimson Flame
   description: Crimson Flame
   passiveAbility: Blocks hit become Burning and take damage for 3 turns.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: -6226900010406427004, guid: b141a351f0e9a574fadf0d888ebb4a4c, type: 3}
+  icon: {fileID: -6226900010406427004, guid: b141a351f0e9a574fadf0d888ebb4a4c, type: 3}
   prefab: {fileID: 100000, guid: c0400000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portraitPrefab: {fileID: 100000, guid: fa110000000000000000000000000003, type: 3}
+  frontSprite: {fileID: -6226900010406427004, guid: b141a351f0e9a574fadf0d888ebb4a4c, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 0.95, g: 0.28, b: 0.2, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: -6226900010406427004, guid: b141a351f0e9a574fadf0d888ebb4a4c, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: -6226900010406427004, guid: b141a351f0e9a574fadf0d888ebb4a4c, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: Crimson Flame

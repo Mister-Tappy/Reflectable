@@ -21,6 +21,7 @@ namespace Reflectable
         public Sprite portrait;
         public Sprite icon;
         public GameObject prefab;
+        public GameObject portraitPrefab;
         public Sprite frontSprite;
         public Sprite sideSprite;
         public Sprite backSprite;

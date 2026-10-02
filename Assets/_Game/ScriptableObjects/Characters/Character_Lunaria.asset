@@ -20,16 +20,17 @@ MonoBehaviour:
   description: The Celestial Starcaller
   passiveAbility: Each ricochet increases current projectile damage by 5%, up to
     100%. After 20 ricochets the projectile becomes Star Ball and pierces 5 Blocks.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: 8756151489921504473, guid: 779eb268aa71ac6428eff1b147d9b1fb, type: 3}
+  icon: {fileID: 8756151489921504473, guid: 779eb268aa71ac6428eff1b147d9b1fb, type: 3}
   prefab: {fileID: 100000, guid: c0100000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portraitPrefab: {fileID: 100000, guid: fa110000000000000000000000000005, type: 3}
+  frontSprite: {fileID: 8756151489921504473, guid: 779eb268aa71ac6428eff1b147d9b1fb, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 1, g: 0.78, b: 0.22, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: 8756151489921504473, guid: 779eb268aa71ac6428eff1b147d9b1fb, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: 8756151489921504473, guid: 779eb268aa71ac6428eff1b147d9b1fb, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: The Celestial Starcaller

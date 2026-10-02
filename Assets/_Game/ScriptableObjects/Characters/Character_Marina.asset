@@ -19,16 +19,17 @@ MonoBehaviour:
   title: Tide Whisper
   description: Tide Whisper
   passiveAbility: Projectile impacts deal splash damage around the hit Block.
-  portrait: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  icon: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portrait: {fileID: 4585085906914774881, guid: caf03927e6aa1924ead5b678f11f10e9, type: 3}
+  icon: {fileID: 4585085906914774881, guid: caf03927e6aa1924ead5b678f11f10e9, type: 3}
   prefab: {fileID: 100000, guid: c0300000000000000000000000000000, type: 3}
-  frontSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  portraitPrefab: {fileID: 100000, guid: fa110000000000000000000000000006, type: 3}
+  frontSprite: {fileID: 4585085906914774881, guid: caf03927e6aa1924ead5b678f11f10e9, type: 3}
   sideSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   backSprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   themeColor: {r: 0.25, g: 0.78, b: 0.94, a: 1}
-  bannerArtwork: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  bannerArtwork: {fileID: 4585085906914774881, guid: caf03927e6aa1924ead5b678f11f10e9, type: 3}
   bannerBackground: {fileID: 0}
-  fullBodyCutIn: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  fullBodyCutIn: {fileID: 4585085906914774881, guid: caf03927e6aa1924ead5b678f11f10e9, type: 3}
   cutInOffset: {x: 0, y: 0}
   cutInScale: 1
   cutInAbilityName: Tide Whisper
