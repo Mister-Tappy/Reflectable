@@ -10,7 +10,8 @@ MonoBehaviour:
   difficultyLabel: NORMAL
   description: Peaceful grasslands and a gentle opening.
   stageVisualPrefab: {fileID: 4098247842316907304, guid: 01010101010101010101010101010101, type: 3}
-  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectPreview: {fileID: -3095434498861050858, guid: 416d5e37a4a667f458636e8934ffa6dd, type: 3}
+  stageSelectPreviewPrefab: {fileID: 100000, guid: ee100000000000000000000000000001, type: 3}
   stageSelectTint: {r: 0.48, g: 0.78, b: 0.96, a: 1}
   backgroundGradient:
     serializedVersion: 2

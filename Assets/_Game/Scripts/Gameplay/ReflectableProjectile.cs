@@ -57,6 +57,7 @@ namespace Reflectable
 
         public void Launch(ReflectableGameController owner, Vector2 direction, float launchSpeed, int initialDamage)
         {
+            MenuSettingsAudioMockup.PlayBallShot();
             game = owner;
             damage = initialDamage;
             this.initialDamage = initialDamage;

@@ -10,7 +10,8 @@ MonoBehaviour:
   difficultyLabel: NORMAL
   description: Warm fields and rural landmark placeholders.
   stageVisualPrefab: {fileID: 578614055661023698, guid: 03030303030303030303030303030303, type: 3}
-  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectPreview: {fileID: 1444674258010873691, guid: fc7a920b163b1f343836ab78ea89ed60, type: 3}
+  stageSelectPreviewPrefab: {fileID: 100000, guid: ee100000000000000000000000000003, type: 3}
   stageSelectTint: {r: 0.52, g: 0.78, b: 0.94, a: 1}
   backgroundGradient:
     serializedVersion: 2

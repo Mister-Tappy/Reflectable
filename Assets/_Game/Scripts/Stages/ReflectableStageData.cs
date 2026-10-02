@@ -14,6 +14,7 @@ namespace Reflectable
         [Header("Presentation")]
         public GameObject stageVisualPrefab;
         public Sprite stageSelectPreview;
+        public GameObject stageSelectPreviewPrefab;
         public Color stageSelectTint = Color.white;
         public Gradient backgroundGradient = new Gradient();
 

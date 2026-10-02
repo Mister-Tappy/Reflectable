@@ -10,7 +10,8 @@ MonoBehaviour:
   difficultyLabel: ADVANCED
   description: Cool cliffs and layered mountain silhouettes.
   stageVisualPrefab: {fileID: 5376462229053701590, guid: 04040404040404040404040404040404, type: 3}
-  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectPreview: {fileID: 5155273212702379513, guid: c75d1bf355fe23b4e9c973d045161046, type: 3}
+  stageSelectPreviewPrefab: {fileID: 100000, guid: ee100000000000000000000000000004, type: 3}
   stageSelectTint: {r: 0.62, g: 0.77, b: 0.91, a: 1}
   backgroundGradient:
     serializedVersion: 2

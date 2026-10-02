@@ -10,7 +10,8 @@ MonoBehaviour:
   difficultyLabel: EXPERT
   description: Dunes, cacti, and warm ruin placeholders.
   stageVisualPrefab: {fileID: 4036317750668425382, guid: 08080808080808080808080808080808, type: 3}
-  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectPreview: {fileID: -2973678138583212980, guid: 1f8888be556d31743933a71e96e81726, type: 3}
+  stageSelectPreviewPrefab: {fileID: 100000, guid: ee100000000000000000000000000008, type: 3}
   stageSelectTint: {r: 1, g: 0.73, b: 0.48, a: 1}
   backgroundGradient:
     serializedVersion: 2

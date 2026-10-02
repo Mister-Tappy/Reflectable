@@ -142,6 +142,7 @@ namespace Reflectable
 
         public void Hit(int combo, Vector3 position, int damage, bool critical, ArcadeHitKind kind, bool destroyed)
         {
+            MenuSettingsAudioMockup.PlayImpact();
             if (comboBreak != null) { StopCoroutine(comboBreak); comboBreak = null; }
             currentCombo = Mathf.Max(0, combo);
             RefreshCharacterReaction();
@@ -192,6 +193,7 @@ namespace Reflectable
             bool milestoneHit = comboPresentation && comboPresentation.Config && comboPresentation.Config.TryGetMilestone(currentCombo, out milestone);
             if (milestoneHit)
             {
+                MenuSettingsAudioMockup.PlayHighCombo();
                 ComboTierSettings tier = comboPresentation.Config.TierFor(currentCombo);
                 comboOrb?.ShowMilestone(milestone.announcement, tier.secondaryColor);
             }
@@ -315,6 +317,8 @@ namespace Reflectable
         void StartArcadeShake(float strength, float duration)
         {
             if (shake != null) StopCoroutine(shake);
+            strength *= MenuSettingsAudioMockup.ScreenShakeIntensity;
+            if (strength <= 0f) return;
             shake = StartCoroutine(ShakeRoutine(Mathf.Min(.28f, strength), duration));
         }
 
@@ -976,12 +980,13 @@ namespace Reflectable
             var config = comboPresentation ? comboPresentation.Config : null;
             if (!config) return;
             if (!arcadeAudioSource) arcadeAudioSource = gameObject.AddComponent<AudioSource>();
-            if (config.comboIncrease) arcadeAudioSource.PlayOneShot(config.comboIncrease, .18f);
-            if (critical && config.criticalHit) arcadeAudioSource.PlayOneShot(config.criticalHit, .7f);
-            if (destroyed && config.blockDestruction) arcadeAudioSource.PlayOneShot(config.blockDestruction, .55f);
-            if (milestone && config.comboMilestone) arcadeAudioSource.PlayOneShot(config.comboMilestone, .8f);
-            if (hyper && config.hyperCombo) arcadeAudioSource.PlayOneShot(config.hyperCombo, 1f);
-            if (milestone && currentCombo >= 200 && config.characterCutIn) arcadeAudioSource.PlayOneShot(config.characterCutIn, .85f);
+            float volume = MenuSettingsAudioMockup.SfxVolume;
+            if (config.comboIncrease) arcadeAudioSource.PlayOneShot(config.comboIncrease, .18f * volume);
+            if (critical && config.criticalHit) arcadeAudioSource.PlayOneShot(config.criticalHit, .7f * volume);
+            if (destroyed && config.blockDestruction) arcadeAudioSource.PlayOneShot(config.blockDestruction, .55f * volume);
+            if (milestone && config.comboMilestone) arcadeAudioSource.PlayOneShot(config.comboMilestone, .8f * volume);
+            if (hyper && config.hyperCombo) arcadeAudioSource.PlayOneShot(config.hyperCombo, volume);
+            if (milestone && currentCombo >= 200 && config.characterCutIn) arcadeAudioSource.PlayOneShot(config.characterCutIn, .85f * volume);
         }
 
         void PlayCharacterVoice(int milestone)

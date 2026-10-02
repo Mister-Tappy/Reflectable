@@ -10,7 +10,8 @@ MonoBehaviour:
   difficultyLabel: ADVANCED
   description: Readable pastel skyline with spare foreground detail.
   stageVisualPrefab: {fileID: 983911977889621828, guid: 06060606060606060606060606060606, type: 3}
-  stageSelectPreview: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  stageSelectPreview: {fileID: 6929956094354590632, guid: 4137a429a6268d645bfdd314e1486566, type: 3}
+  stageSelectPreviewPrefab: {fileID: 100000, guid: ee100000000000000000000000000006, type: 3}
   stageSelectTint: {r: 0.64, g: 0.55, b: 0.88, a: 1}
   backgroundGradient:
     serializedVersion: 2
