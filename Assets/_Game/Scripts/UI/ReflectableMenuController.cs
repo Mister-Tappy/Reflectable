@@ -13,6 +13,7 @@ namespace Reflectable
         [SerializeField] GameObject mainMenuPanel;
         [SerializeField] GameObject stageSelectPanel;
         [SerializeField] GameObject settingsPanel;
+        FloatingIslandMenuNavigator islandNavigator;
         Image stageSelectBackground;
         Image lockedStageOverlay;
         GameObject menuBackdrop, activeStageBackground;
@@ -31,14 +32,59 @@ namespace Reflectable
         void Start()
         {
             Time.timeScale = 1f;
-            if (continueButton) continueButton.SetActive(File.Exists(SavePath));
+            islandNavigator = FindFirstObjectByType<FloatingIslandMenuNavigator>();
+            if (continueButton) continueButton.SetActive(true);
             if (bestScore) bestScore.text = "BEST SCORE: " + PlayerPrefs.GetInt("ReflectableBest", 0);
+            BindSceneButtons();
             stageSelectBackground = stageSelectPanel ? stageSelectPanel.GetComponent<Image>() : null;
             menuBackdrop = GameObject.Find("Background");
             menuBackdropWasActive = menuBackdrop && menuBackdrop.activeSelf;
             EnsureLockedStageOverlay();
             ShowMainMenu();
             if (group) StartCoroutine(Fade());
+        }
+
+        void BindSceneButtons()
+        {
+            BindButton(FindButton(mainMenuPanel, "PlayGameButton"), OpenStageSelect);
+            BindButton(continueButton ? continueButton.GetComponent<Button>() : FindButton(mainMenuPanel, "ResumeButton"), Continue);
+            BindButton(FindButton(mainMenuPanel, "SettingsButton"), ToggleSettings);
+            BindButton(FindButton(mainMenuPanel, "ExitButton"), Quit);
+
+            if (!stageSelectPanel) return;
+            if (!leftButton) leftButton = FindButton(stageSelectPanel, "LeftArrow");
+            if (!rightButton) rightButton = FindButton(stageSelectPanel, "RightArrow");
+            if (!playButton) playButton = FindButton(stageSelectPanel, "PlayButton");
+            BindButton(leftButton, SelectPrevious);
+            BindButton(rightButton, SelectNext);
+            BindButton(playButton, PlaySelected);
+            foreach (var button in stageSelectPanel.GetComponentsInChildren<Button>(true))
+                if (button && button.gameObject.name == "BackButton") BindButton(button, ShowMainMenu);
+        }
+
+        static Button FindButton(GameObject root, string buttonName)
+        {
+            if (!root) return null;
+            foreach (var button in root.GetComponentsInChildren<Button>(true))
+                if (button && button.gameObject.name == buttonName) return button;
+            return null;
+        }
+
+        static void BindButton(Button button, UnityEngine.Events.UnityAction handler)
+        {
+            if (!button || handler == null) return;
+
+            // Keep existing Hierarchy-authored callbacks and only provide a
+            // runtime fallback when that exact callback is not serialized.
+            UnityEngine.Object handlerTarget = handler.Target as UnityEngine.Object;
+            for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+            {
+                if (button.onClick.GetPersistentTarget(i) == handlerTarget &&
+                    button.onClick.GetPersistentMethodName(i) == handler.Method.Name)
+                    return;
+            }
+
+            button.onClick.AddListener(handler);
         }
 
         IEnumerator Fade()
@@ -61,6 +107,12 @@ namespace Reflectable
 
         public void OpenStageSelect()
         {
+            if (islandNavigator && islandNavigator.NavigateTo(MenuDestination.Play)) return;
+            OpenStageSelectAfterTravel();
+        }
+
+        public void OpenStageSelectAfterTravel()
+        {
             if (mainMenuPanel) mainMenuPanel.SetActive(false);
             if (settingsPanel) settingsPanel.SetActive(false);
             if (stageSelectPanel) stageSelectPanel.SetActive(true);
@@ -70,6 +122,12 @@ namespace Reflectable
 
         public void ShowMainMenu()
         {
+            if (islandNavigator && islandNavigator.ReturnToMainMenu()) return;
+            ShowMainMenuAfterTravel();
+        }
+
+        public void ShowMainMenuAfterTravel()
+        {
             if (mainMenuPanel) mainMenuPanel.SetActive(true);
             if (stageSelectPanel) stageSelectPanel.SetActive(false);
             if (settingsPanel) settingsPanel.SetActive(false);
@@ -78,6 +136,26 @@ namespace Reflectable
             if (menuBackdrop) menuBackdrop.SetActive(menuBackdropWasActive);
             if (stageSelectBackground) stageSelectBackground.color = Color.white;
         }
+
+        public void PrepareForReturnTravel()
+        {
+            if (mainMenuPanel) mainMenuPanel.SetActive(false);
+            if (stageSelectPanel) stageSelectPanel.SetActive(false);
+            if (settingsPanel) settingsPanel.SetActive(false);
+            if (activeStageBackground) Destroy(activeStageBackground);
+            activeStageBackground = null;
+            if (menuBackdrop) menuBackdrop.SetActive(menuBackdropWasActive);
+            if (stageSelectBackground) stageSelectBackground.color = Color.white;
+        }
+
+        public void OpenSettingsAfterTravel()
+        {
+            if (mainMenuPanel) mainMenuPanel.SetActive(false);
+            if (stageSelectPanel) stageSelectPanel.SetActive(false);
+            if (settingsPanel) settingsPanel.SetActive(true);
+        }
+
+        public void ReturnFromSettings() => ShowMainMenu();
 
         public void SelectStage(int stage)
         {
@@ -89,7 +167,7 @@ namespace Reflectable
         public void PlaySelected(){if(!ReflectableStageSession.IsUnlocked(carouselStage))return;ReflectableStageSession.SelectedStage=carouselStage;SceneManager.LoadScene("Game");}
         IEnumerator Slide(int direction){if(!HasCarouselReferences())yield break;transitioning=true;var selectedRect=selectedIsland.rectTransform;var start=selectedRect.anchoredPosition;for(float t=0;t<.14f;t+=Time.unscaledDeltaTime){selectedRect.anchoredPosition=Vector2.Lerp(start,start+Vector2.left*direction*130,t/.14f);yield return null;}carouselStage+=direction;RefreshCarousel();for(float t=0;t<.14f;t+=Time.unscaledDeltaTime){selectedRect.anchoredPosition=Vector2.Lerp(start+Vector2.right*direction*130,start,t/.14f);yield return null;}selectedRect.anchoredPosition=start;transitioning=false;}
         void RefreshCarousel(){if(!HasCarouselReferences())return;SetSlot(previousIsland,previousGroup,previousLabel,carouselStage-1);SetSlot(selectedIsland,selectedGroup,selectedLabel,carouselStage);SetSlot(nextIsland,nextGroup,nextLabel,carouselStage+1);var info=ReflectableStageSession.GetPresentation(carouselStage);var selectedData=ReflectableStageConfig.DataFor(carouselStage);RefreshStageBackground(selectedData);bool unlocked=ReflectableStageSession.IsUnlocked(carouselStage);if(lockedStageOverlay)lockedStageOverlay.color=new Color(0f,0f,0f,unlocked?0f:LockedStageOverlayAlpha);stageNumber.text="STAGE "+carouselStage;stageName.text=info.Name;difficulty.text="Difficulty: "+info.Difficulty;requirement.text="Destroy "+ReflectableStageSession.ClearRequirement(carouselStage)+" Blocks";bestScoreText.text="Best Score: "+PlayerPrefs.GetInt("ReflectableStage"+carouselStage+"Best",0);status.text=unlocked?"UNLOCKED":"LOCKED\nClear Stage "+(carouselStage-1)+" to unlock.";description.text=info.Description;playButton.interactable=unlocked;leftButton.interactable=carouselStage>1;rightButton.interactable=carouselStage<ReflectableStageConfig.StageCount;}
-        void RefreshStageBackground(ReflectableStageData data){if(activeStageBackground)Destroy(activeStageBackground);activeStageBackground=data&&data.stageVisualPrefab?Instantiate(data.stageVisualPrefab,Vector3.zero,Quaternion.identity):null;if(stageSelectBackground)stageSelectBackground.color=new Color(1f,1f,1f,0f);if(data&&!data.stageVisualPrefab)Debug.LogWarning("ReflectableMenuController: Stage "+carouselStage+" has no stage visual prefab for the selection background.",this);}
+        void RefreshStageBackground(ReflectableStageData data){if(activeStageBackground)Destroy(activeStageBackground);var camera=Camera.main;Vector3 position=camera?new Vector3(camera.transform.position.x,camera.transform.position.y,0f):Vector3.zero;activeStageBackground=data&&data.stageVisualPrefab?Instantiate(data.stageVisualPrefab,position,Quaternion.identity):null;if(stageSelectBackground)stageSelectBackground.color=new Color(1f,1f,1f,0f);if(data&&!data.stageVisualPrefab)Debug.LogWarning("ReflectableMenuController: Stage "+carouselStage+" has no stage visual prefab for the selection background.",this);}
         void EnsureLockedStageOverlay(){if(!stageSelectPanel)return;var existing=stageSelectPanel.transform.Find("LockedStageOverlay");if(existing)lockedStageOverlay=existing.GetComponent<Image>();if(!lockedStageOverlay){var overlay=new GameObject("LockedStageOverlay",typeof(RectTransform),typeof(CanvasRenderer),typeof(Image));overlay.transform.SetParent(stageSelectPanel.transform,false);lockedStageOverlay=overlay.GetComponent<Image>();}var rect=lockedStageOverlay.rectTransform;rect.anchorMin=Vector2.zero;rect.anchorMax=Vector2.one;rect.offsetMin=Vector2.zero;rect.offsetMax=Vector2.zero;lockedStageOverlay.sprite=null;lockedStageOverlay.color=Color.clear;lockedStageOverlay.raycastTarget=false;rect.SetAsFirstSibling();}
         bool HasCarouselReferences(){bool valid=previousIsland&&selectedIsland&&nextIsland&&previousGroup&&selectedGroup&&nextGroup&&previousLabel&&selectedLabel&&nextLabel&&stageNumber&&stageName&&difficulty&&requirement&&bestScoreText&&status&&description&&leftButton&&rightButton&&playButton;if(!valid&&!carouselReferenceErrorReported){carouselReferenceErrorReported=true;Debug.LogError("ReflectableMenuController: Stage carousel references are incomplete. Rebuild MainMenu to assign the carousel slots.",this);}return valid;}
         static Sprite PreviewSprite(ReflectableStageData data,Sprite fallback){if(data&&data.stageSelectPreviewPrefab){var image=data.stageSelectPreviewPrefab.GetComponent<Image>();if(image&&image.sprite)return image.sprite;}return data&&data.stageSelectPreview?data.stageSelectPreview:fallback;}
@@ -97,17 +175,32 @@ namespace Reflectable
 
         public void Continue()
         {
+            if (islandNavigator && islandNavigator.NavigateTo(MenuDestination.Continue)) return;
+            ContinueRunNow();
+        }
+
+        public void ContinueRunNow()
+        {
+            if (!File.Exists(SavePath)) return;
             PlayerPrefs.SetInt("ReflectableContinue", 1);
             SceneManager.LoadScene("Game");
         }
 
         public void ToggleSettings()
         {
-            if (settingsPanel) settingsPanel.SetActive(!settingsPanel.activeSelf);
-            if (settingsPanel && settingsPanel.activeSelf && mainMenuPanel) mainMenuPanel.SetActive(false);
+            if (islandNavigator && islandNavigator.NavigateTo(MenuDestination.Settings)) return;
+            OpenSettingsAfterTravel();
         }
 
-        public void Quit() => Application.Quit();
+        public void Quit()
+        {
+            if (islandNavigator && islandNavigator.NavigateTo(MenuDestination.Exit)) return;
+            Application.Quit();
+        }
+
+        public GameObject MainMenuPanel => mainMenuPanel;
+        public GameObject StageSelectPanel => stageSelectPanel;
+        public GameObject SettingsPanel => settingsPanel;
 
     }
 }
