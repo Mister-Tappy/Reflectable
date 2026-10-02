@@ -18,6 +18,7 @@ namespace Reflectable
         [Header("Scene references")][SerializeField] Camera gameCamera; [SerializeField] Transform player, firePoint, gridOrigin, blocksRoot, projectilesRoot, stageVisualContainer; [SerializeField] LineRenderer aimPreview;
         [SerializeField] GameObject normalBlockPrefab, gemBlockPrefab, bombBlockPrefab, projectilePrefab;
         [Header("Arena")][SerializeField] float left = -7f, right = 7f, ceiling = 5.2f, bottom = -5.4f;
+        [Header("Responsive viewport")][SerializeField, Min(0f)] float horizontalViewportMargin = .4f;
         [Header("Grid")][SerializeField, Min(1)] int columns = 7, rows = 10; [SerializeField] Vector2 cellSpacing = new Vector2(1.85f, 1.22f);
         [Header("UI")][SerializeField] Text hpText, scoreText, gemsText, turnText, comboText, levelText, characterText, gameOverText; [SerializeField] GameObject pausePanel, pauseSettingsPanel, mainMenuConfirmPanel, gameOverPanel, upgradePanel, characterPanel, stageIntro; [SerializeField] Button powerButton, ricochetButton, extraBallButton, characterButton, skipTurnButton, pauseButton; [SerializeField] PlayerCharacterPresenter characterPresenter; [SerializeField] CharacterGachaUI characterGacha; [SerializeField] GameplayHudController gameplayHud;
         [Header("Balance")][SerializeField] float projectileSpeed = 12f; [SerializeField] int baseDamage = 10; [SerializeField] float launchSpacing = .09f; [SerializeField] GameplayFeedbackManager feedback;
@@ -25,6 +26,13 @@ namespace Reflectable
         readonly List<ReflectableBlockView> blocks = new List<ReflectableBlockView>();
         readonly HashSet<int> activeProjectileIds = new HashSet<int>();
         readonly Dictionary<int,int> burningBlocks = new Dictionary<int,int>();
+        struct TiledBackdropSize { public SpriteRenderer renderer; public Vector2 size; }
+        readonly List<TiledBackdropSize> tiledBackdropSizes = new List<TiledBackdropSize>();
+        readonly List<RaycastResult> touchUiHits = new List<RaycastResult>(8);
+        PointerEventData touchPointerData;
+        EventSystem touchEventSystem;
+        int activeAimFingerId = -1, viewportWidth = -1, viewportHeight = -1;
+        float designCameraSize = 6.2f;
         int turn,hp,maxHp,score,gems,level,exp,skillPoints,power,ricochet,extraBall,combo,maxCombo,destroyed,ricochets,rank,stage,stageBlocks,nextBossThreshold,bossNumber,lightDamage,lightRange,lightPierce; string character=CharacterProgression.StarterId; GameObject activeStageVisual; bool aiming,ending,gameOver,turnFired,stageCleared,stageClearPending,skippingTurn,bossActive,bossQueued,finalBossActive,stageTransitioning; [SerializeField] bool drawPlayerDamageDebug; int activeProjectiles; TurnState state, pausedState;
         float nyxDamageBonus,nyxRicochetBonus,nyxCriticalBonus;int nyxExtraBalls,nyxGemBonus;Coroutine gachaRoutine;
         string SavePath => Path.Combine(Application.persistentDataPath,"reflectable_run.json");
@@ -40,7 +48,7 @@ namespace Reflectable
             enabled = false;
             Debug.LogError("ReflectableGameController disabled because the saved Game scene has missing persistent references.", this);
         }
-        void Start(){Application.targetFrameRate=120;Time.timeScale=1;feedback?.BindCharacter(characterPresenter);if(pausePanel)pausePanel.SetActive(false);if(pauseSettingsPanel)pauseSettingsPanel.SetActive(false);if(mainMenuConfirmPanel)mainMenuConfirmPanel.SetActive(false);if(gameOverPanel)gameOverPanel.SetActive(false);if(upgradePanel)upgradePanel.SetActive(false);if(characterPanel)characterPanel.SetActive(false);if(PlayerPrefs.GetInt("ReflectableContinue",0)==1){PlayerPrefs.DeleteKey("ReflectableContinue");ContinueGame();}else StartNewRun();}
+        void Start(){designCameraSize=Mathf.Max(6.2f,gameCamera.orthographicSize);Application.targetFrameRate=120;Time.timeScale=1;feedback?.BindCharacter(characterPresenter);if(pausePanel)pausePanel.SetActive(false);if(pauseSettingsPanel)pauseSettingsPanel.SetActive(false);if(mainMenuConfirmPanel)mainMenuConfirmPanel.SetActive(false);if(gameOverPanel)gameOverPanel.SetActive(false);if(upgradePanel)upgradePanel.SetActive(false);if(characterPanel)characterPanel.SetActive(false);if(PlayerPrefs.GetInt("ReflectableContinue",0)==1){PlayerPrefs.DeleteKey("ReflectableContinue");ContinueGame();}else StartNewRun();}
         bool ValidatePersistentReferences()
         {
             bool valid = true;
@@ -51,7 +59,148 @@ namespace Reflectable
             if (characterGacha && !characterGacha.HasPersistentReferences) { valid = false; Debug.LogError("CharacterGachaUI has missing persistent banner or reveal references.", characterGacha); }
             return valid;
         }
-        void Update(){if(gameOver)return;var mouse=Mouse.current;if(Keyboard.current!=null&&Keyboard.current.escapeKey.wasPressedThisFrame){if(mainMenuConfirmPanel&&mainMenuConfirmPanel.activeInHierarchy)CancelMainMenu();else if(pauseSettingsPanel&&pauseSettingsPanel.activeInHierarchy)ClosePauseSettings();else TogglePause();}if(!GameplayInputEnabled||mouse==null)return;Vector3 world=gameCamera.ScreenToWorldPoint(mouse.position.ReadValue());Vector2 dir=(Vector2)(world-firePoint.position);dir.y=Mathf.Max(.2f,dir.y);dir.Normalize();DrawPreview(dir);if(mouse.leftButton.wasPressedThisFrame&&!PointerOverUI())StartCoroutine(Fire(dir));}
+        void Update()
+        {
+            ApplyResponsiveViewport();
+            if (gameOver) return;
+            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            {
+                if (mainMenuConfirmPanel && mainMenuConfirmPanel.activeInHierarchy) CancelMainMenu();
+                else if (pauseSettingsPanel && pauseSettingsPanel.activeInHierarchy) ClosePauseSettings();
+                else TogglePause();
+            }
+
+            bool touchPresent = UpdateTouchAim();
+            if (touchPresent || activeAimFingerId >= 0 || !GameplayInputEnabled) return;
+
+            var mouse = Mouse.current;
+            if (mouse == null) return;
+            Vector2 direction = AimDirectionFromScreen(mouse.position.ReadValue());
+            DrawPreview(direction);
+            if (mouse.leftButton.wasPressedThisFrame && !PointerOverUI())
+                StartCoroutine(Fire(direction));
+        }
+
+        Vector2 AimDirectionFromScreen(Vector2 screenPosition)
+        {
+            Vector3 world = gameCamera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, 0f));
+            Vector2 direction = (Vector2)(world - firePoint.position);
+            direction.y = Mathf.Max(.2f, direction.y);
+            return direction.normalized;
+        }
+
+        bool UpdateTouchAim()
+        {
+            var touchscreen = Touchscreen.current;
+            if (touchscreen == null)
+            {
+                activeAimFingerId = -1;
+                return false;
+            }
+
+            bool touchPresent = false;
+            bool activeTouchFound = false;
+            foreach (var touch in touchscreen.touches)
+            {
+                var phase = touch.phase.ReadValue();
+                if (phase == UnityEngine.InputSystem.TouchPhase.None) continue;
+                touchPresent = true;
+                int fingerId = touch.touchId.ReadValue();
+                Vector2 screenPosition = touch.position.ReadValue();
+
+                if (activeAimFingerId < 0)
+                {
+                    if (phase != UnityEngine.InputSystem.TouchPhase.Began || !GameplayInputEnabled || PointerOverTouchUI(screenPosition, fingerId))
+                        continue;
+                    activeAimFingerId = fingerId;
+                    activeTouchFound = true;
+                    DrawPreview(AimDirectionFromScreen(screenPosition));
+                    continue;
+                }
+
+                if (fingerId != activeAimFingerId) continue;
+                activeTouchFound = true;
+                switch (phase)
+                {
+                    case UnityEngine.InputSystem.TouchPhase.Began:
+                    case UnityEngine.InputSystem.TouchPhase.Moved:
+                    case UnityEngine.InputSystem.TouchPhase.Stationary:
+                        if (GameplayInputEnabled) DrawPreview(AimDirectionFromScreen(screenPosition));
+                        break;
+                    case UnityEngine.InputSystem.TouchPhase.Ended:
+                        if (GameplayInputEnabled && !PointerOverTouchUI(screenPosition, fingerId))
+                            StartCoroutine(Fire(AimDirectionFromScreen(screenPosition)));
+                        activeAimFingerId = -1;
+                        break;
+                    case UnityEngine.InputSystem.TouchPhase.Canceled:
+                        activeAimFingerId = -1;
+                        break;
+                }
+            }
+
+            // A lost/canceled device contact must never leave aiming captured.
+            if (activeAimFingerId >= 0 && !activeTouchFound) activeAimFingerId = -1;
+            return touchPresent;
+        }
+
+        bool PointerOverTouchUI(Vector2 screenPosition, int fingerId)
+        {
+            var eventSystem = EventSystem.current;
+            if (!eventSystem) return false;
+            if (touchPointerData == null || touchEventSystem != eventSystem)
+            {
+                touchEventSystem = eventSystem;
+                touchPointerData = new PointerEventData(eventSystem);
+            }
+            touchPointerData.pointerId = fingerId;
+            touchPointerData.position = screenPosition;
+            touchUiHits.Clear();
+            eventSystem.RaycastAll(touchPointerData, touchUiHits);
+            bool overUi = touchUiHits.Count > 0;
+            touchUiHits.Clear();
+            return overUi;
+        }
+
+        void ApplyResponsiveViewport(bool force = false)
+        {
+            if (!gameCamera || !gameCamera.orthographic) return;
+            int width = Screen.width;
+            int height = Screen.height;
+            if (width <= 0 || height <= 0) return;
+            float aspect = width / (float)height;
+            if (!force && width == viewportWidth && height == viewportHeight && Mathf.Abs(aspect - gameCamera.aspect) < .001f) return;
+
+            viewportWidth = width;
+            viewportHeight = height;
+            float visibleArenaWidth = Mathf.Max(0f, right - left) + horizontalViewportMargin * 2f;
+            float cameraSize = Mathf.Max(designCameraSize, visibleArenaWidth / (2f * aspect));
+            gameCamera.orthographicSize = cameraSize;
+            if (feedback) feedback.SetResponsiveCameraBaseSize(cameraSize);
+            FitTiledStageBackgrounds();
+        }
+
+        void CacheAndFitTiledStageBackgrounds(GameObject stageRoot)
+        {
+            tiledBackdropSizes.Clear();
+            if (!stageRoot) return;
+            foreach (var renderer in stageRoot.GetComponentsInChildren<SpriteRenderer>(true))
+                if (renderer && renderer.drawMode == SpriteDrawMode.Tiled)
+                    tiledBackdropSizes.Add(new TiledBackdropSize { renderer = renderer, size = renderer.size });
+            FitTiledStageBackgrounds();
+        }
+
+        void FitTiledStageBackgrounds()
+        {
+            if (!gameCamera || tiledBackdropSizes.Count == 0) return;
+            float visibleWidth = Mathf.Max(designCameraSize, gameCamera.orthographicSize) * 2f * gameCamera.aspect + horizontalViewportMargin * 2f;
+            foreach (var backdrop in tiledBackdropSizes)
+            {
+                if (!backdrop.renderer) continue;
+                float scaleX = Mathf.Max(.001f, Mathf.Abs(backdrop.renderer.transform.lossyScale.x));
+                float neededLocalWidth = visibleWidth / scaleX;
+                backdrop.renderer.size = new Vector2(Mathf.Max(backdrop.size.x, neededLocalWidth), backdrop.size.y);
+            }
+        }
         bool GameplayInputEnabled=>state==TurnState.Aiming&&aiming&&Time.timeScale>0&&!AnyModalOpen();
         bool CanSkipTurn=>(state==TurnState.Aiming||state==TurnState.Firing)&&!skippingTurn&&!stageTransitioning&&!gameOver&&Time.timeScale>0&&!AnyModalOpen();
         bool AnyModalOpen()=>(pausePanel&&pausePanel.activeInHierarchy)||(gameOverPanel&&gameOverPanel.activeInHierarchy)||(upgradePanel&&upgradePanel.activeInHierarchy)||(characterPanel&&characterPanel.activeInHierarchy);
@@ -115,6 +264,7 @@ namespace Reflectable
                 Debug.LogError("[StageVisual] Stage " + stage + " resolved to '" + clone?.GetType().Name +
                     "' instead of a GameObject. Reimport its stage prefab and Stage Data asset.");
             }
+            CacheAndFitTiledStageBackgrounds(activeStageVisual);
             feedback?.BindStageVisual(activeStageVisual);
         }
         Vector2 CellPosition(int row,int col)=>(Vector2)gridOrigin.position+new Vector2((col-(columns-1)*.5f)*cellSpacing.x,-row*cellSpacing.y);

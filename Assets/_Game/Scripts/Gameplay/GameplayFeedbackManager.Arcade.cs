@@ -108,6 +108,13 @@ namespace Reflectable
             highComboMusicLayers = layers ?? new AudioSource[0];
         }
 
+        public void SetResponsiveCameraBaseSize(float size)
+        {
+            cameraBaseSize = Mathf.Max(.01f, size);
+            if (cameraPunchRoutine == null && gameCamera)
+                gameCamera.orthographicSize = cameraBaseSize;
+        }
+
         public void BindStageVisual(GameObject stageVisual)
         {
             ResetStageColors();

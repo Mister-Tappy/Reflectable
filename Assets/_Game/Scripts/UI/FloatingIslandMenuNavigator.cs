@@ -31,6 +31,9 @@ namespace Reflectable
         [SerializeField] Sprite backgroundLayerSprite;
         [SerializeField] Sprite islandSurfaceSprite;
         [SerializeField] Sprite ballSprite;
+        [Header("Responsive background")]
+        [SerializeField] SpriteRenderer responsiveBackgroundCover;
+        [SerializeField] SpriteRenderer landscapeBackgroundArt;
         [SerializeField] IslandLayout[] destinations =
         {
             new IslandLayout { destination = MenuDestination.Play },
@@ -66,6 +69,8 @@ namespace Reflectable
         SpriteRenderer ballRenderer, ballGlow;
         TrailRenderer ballTrail;
         Sprite squareSprite, glowSprite, ringSprite, sphereSprite, diamondSprite;
+        Vector2 responsiveBackgroundSpriteSize;
+        Vector3 responsiveBackgroundBaseScale, responsiveBackgroundBasePosition;
         Material spriteMaterial, trailMaterial;
         Vector3 startPosition, initialCameraPosition;
         float overviewCameraSize;
@@ -156,6 +161,12 @@ namespace Reflectable
             }
             ball.position = startPosition;
             cameraFollow.SnapTo(initialCameraPosition, overviewCameraSize);
+            if (responsiveBackgroundCover && responsiveBackgroundCover.sprite)
+            {
+                responsiveBackgroundSpriteSize = responsiveBackgroundCover.sprite.bounds.size;
+                responsiveBackgroundBaseScale = responsiveBackgroundCover.transform.localScale;
+                responsiveBackgroundBasePosition = responsiveBackgroundCover.transform.position;
+            }
             worldBuilt = true;
         }
 
@@ -500,6 +511,7 @@ namespace Reflectable
             if (!worldBuilt || !sceneCamera) return;
             if (State == MenuNavigationState.MainMenu)
                 cameraFollow.MoveTo(initialCameraPosition, OverviewSizeForAspect());
+            FitResponsiveBackgroundCover();
             for (int i = 0; i < wavePool.Length; i++) wavePool[i]?.Tick(Time.unscaledDeltaTime);
             for (int i = 0; i < particlePool.Length; i++) particlePool[i]?.Tick(Time.unscaledDeltaTime);
             if (ballGlow && ballRenderer)
@@ -508,6 +520,26 @@ namespace Reflectable
                 ballGlow.transform.localScale = Vector3.one * (1.9f + pulse);
                 ballRenderer.transform.localScale = Vector3.one * (.48f + pulse * .14f);
             }
+        }
+
+        void FitResponsiveBackgroundCover()
+        {
+            if (!responsiveBackgroundCover || !sceneCamera || responsiveBackgroundSpriteSize.x <= 0f || responsiveBackgroundSpriteSize.y <= 0f)
+                return;
+
+            bool portrait = sceneCamera.aspect < .8f;
+            if (landscapeBackgroundArt) landscapeBackgroundArt.enabled = !portrait;
+
+            float viewWidth = sceneCamera.orthographicSize * 2f * sceneCamera.aspect;
+            float viewHeight = sceneCamera.orthographicSize * 2f;
+            float scaleX = Mathf.Max(.001f, Mathf.Abs(responsiveBackgroundBaseScale.x));
+            float scaleY = Mathf.Max(.001f, Mathf.Abs(responsiveBackgroundBaseScale.y));
+            float coverScale = Mathf.Max(viewWidth / (responsiveBackgroundSpriteSize.x * scaleX), viewHeight / (responsiveBackgroundSpriteSize.y * scaleY));
+            responsiveBackgroundCover.transform.localScale = responsiveBackgroundBaseScale * coverScale;
+            Vector3 coverPosition = responsiveBackgroundBasePosition;
+            coverPosition.x = sceneCamera.transform.position.x;
+            coverPosition.y = sceneCamera.transform.position.y;
+            responsiveBackgroundCover.transform.position = coverPosition;
         }
 
         void PlayWave(Vector3 position, Color color, float size, float lifetime)
