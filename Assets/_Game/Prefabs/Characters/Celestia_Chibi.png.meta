@@ -1,25 +1,13 @@
 fileFormatVersion: 2
-guid: b5cf9d5056f8e8c489a231fed915417f
+guid: 2177fdc19944fb24c97332da0286b268
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 4172221475107169492
-    second: Alice_Chibi_0
+      213: -6461611409491945894
+    second: Celestia_Chibi_0
   - first:
-      213: -7227420553613230238
-    second: Alice_Chibi_1
-  - first:
-      213: 6497787594067769188
-    second: Alice_Chibi_2
-  - first:
-      213: -3971724883956117941
-    second: Alice_Chibi_3
-  - first:
-      213: -8261019295608221076
-    second: Alice_Chibi_4
-  - first:
-      213: -1074996284493016877
-    second: Alice_Chibi_5
+      213: -1811702471535304030
+    second: Celestia_Chibi_1
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -128,101 +116,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Alice_Chibi_0
-      rect:
-        serializedVersion: 2
-        x: 164
-        y: 1465
-        width: 15
-        height: 25
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 4d4e4048355b6e930800000000000000
-      internalID: 4172221475107169492
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Alice_Chibi_1
-      rect:
-        serializedVersion: 2
-        x: 172
-        y: 1479
-        width: 37
-        height: 41
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 26fb68b8c4b03bb90800000000000000
-      internalID: -7227420553613230238
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Alice_Chibi_2
-      rect:
-        serializedVersion: 2
-        x: 974
-        y: 1483
-        width: 23
-        height: 28
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 467795ad367cc2a50800000000000000
-      internalID: 6497787594067769188
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Alice_Chibi_3
-      rect:
-        serializedVersion: 2
-        x: 992
-        y: 1475
-        width: 27
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: b4e473ad24991e8c0800000000000000
-      internalID: -3971724883956117941
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Alice_Chibi_4
+      name: Celestia_Chibi_0
       rect:
         serializedVersion: 2
         x: 0
-        y: 9
-        width: 1024
-        height: 1457
+        y: 710
+        width: 5
+        height: 12
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -231,20 +131,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c62df9a28b6fa5d80800000000000000
-      internalID: -8261019295608221076
+      spriteID: a561f9c78aeb356a0800000000000000
+      internalID: -6461611409491945894
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Alice_Chibi_5
+      name: Celestia_Chibi_1
       rect:
         serializedVersion: 2
-        x: 310
-        y: 1463
-        width: 11
-        height: 10
+        x: 7
+        y: 0
+        width: 1006
+        height: 1520
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -253,8 +153,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3d0dde72398d411f0800000000000000
-      internalID: -1074996284493016877
+      spriteID: 2a2e071733a8bd6e0800000000000000
+      internalID: -1811702471535304030
       vertices: []
       indices: 
       edges: []
@@ -273,12 +173,8 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Alice_Chibi_0: 4172221475107169492
-      Alice_Chibi_1: -7227420553613230238
-      Alice_Chibi_2: 6497787594067769188
-      Alice_Chibi_3: -3971724883956117941
-      Alice_Chibi_4: -8261019295608221076
-      Alice_Chibi_5: -1074996284493016877
+      Celestia_Chibi_0: -6461611409491945894
+      Celestia_Chibi_1: -1811702471535304030
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 
