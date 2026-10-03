@@ -132,6 +132,15 @@ namespace Reflectable
             return true;
         }
 
+        public void SetMenuIslandsVisible(bool visible)
+        {
+            if (destinations != null)
+                foreach (var layout in destinations)
+                    if (layout != null && layout.island) layout.island.gameObject.SetActive(visible);
+            if (startPoint && startPoint.parent) startPoint.parent.gameObject.SetActive(visible);
+            if (ball) ball.gameObject.SetActive(visible);
+        }
+
         void BuildWorld()
         {
             if (!worldRoot || !startPoint || !menuBall)
@@ -321,7 +330,8 @@ namespace Reflectable
                 return;
             }
 
-            var hasSave = System.IO.File.Exists(System.IO.Path.Combine(Application.persistentDataPath, "reflectable_run.json"));
+            var savePath = System.IO.Path.Combine(Application.persistentDataPath, "reflectable_run.json");
+            var hasSave = System.IO.File.Exists(savePath) || System.IO.File.Exists(savePath + ".bak");
             var saveStatus = continuePanel.transform.Find("Card/SaveStatusText")?.GetComponent<Text>();
             if (saveStatus) saveStatus.text = hasSave ? "A saved run is ready." : "No saved run found yet.";
             BindDestinationButton(continuePanel, "ContinueRunButton", hasSave ? "CONTINUE RUN" : "NO SAVED RUN", !hasSave, () => menuController?.ContinueRunNow());

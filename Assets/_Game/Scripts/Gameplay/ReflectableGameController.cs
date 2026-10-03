@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -12,7 +13,7 @@ namespace Reflectable
 {
     public enum ReflectableBlockType { Normal, Tough, Armored, Elite, Anchor, Gem, Bomb, Boss }
     [Serializable] public class ReflectableCellSave { public int row, column, hp, maxHp; public ReflectableBlockType type; }
-    [Serializable] public class ReflectableRunSave { public bool valid; public int stage, turn, hp, maxHp, score, gems, level, exp, skillPoints, power, ricochet, extraBall, maxCombo, destroyed, stageBlocks, ricochets, lightDamage, lightRange, lightPierce; public string character; public int rank; public List<ReflectableCellSave> blocks = new List<ReflectableCellSave>(); }
+    [Serializable] public class ReflectableRunSave { public bool valid; public int version = 2; public bool beginTurnOnRestore; public int stage, turn, hp, maxHp, score, gems, level, exp, skillPoints, power, ricochet, extraBall, maxCombo, destroyed, stageBlocks, ricochets, lightDamage, lightRange, lightPierce; public string character; public int rank; public List<ReflectableCellSave> blocks = new List<ReflectableCellSave>(); }
     public sealed class ReflectableGameController : MonoBehaviour
     {
         [Header("Scene references")][SerializeField] Camera gameCamera; [SerializeField] Transform player, firePoint, gridOrigin, blocksRoot, projectilesRoot, stageVisualContainer; [SerializeField] LineRenderer aimPreview;
@@ -40,6 +41,15 @@ namespace Reflectable
         string SavePath => Path.Combine(Application.persistentDataPath,"reflectable_run.json");
         string SaveBackupPath => SavePath+".bak";
         string SaveTempPath => SavePath+".tmp";
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [DllImport("__Internal")] static extern void ReflectableFlushPersistentData();
+#endif
+        static void FlushPersistentStorage()
+        {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            ReflectableFlushPersistentData();
+#endif
+        }
         public int CurrentHP => hp;
         public int MaxHP => maxHp;
         public event Action<int, int> HealthChanged;
@@ -266,7 +276,7 @@ namespace Reflectable
         void StartStage(int nextStage){StopAllCoroutines();Time.timeScale=1;feedback?.CancelTimeEffects();feedback?.ComboEnded(combo);ResolveActiveProjectiles(false);ClearBlocks();stage=Mathf.Clamp(nextStage,1,ReflectableStageConfig.StageCount);ReflectableStageSession.SelectedStage=stage;turn=0;combo=0;stageBlocks=0;bossNumber=0;nextBossThreshold=ReflectableStageConfig.For(stage).BossInterval;bossActive=bossQueued=finalBossActive=false;stageCleared=stageClearPending=false;aiming=false;ending=false;turnFired=false;skippingTurn=false;state=TurnState.Resolving;stageTransitioning=true;if(pausePanel)pausePanel.SetActive(false);if(pauseSettingsPanel)pauseSettingsPanel.SetActive(false);if(mainMenuConfirmPanel)mainMenuConfirmPanel.SetActive(false);if(gameOverPanel)gameOverPanel.SetActive(false);ApplyStageVisual();UpdatePauseButton();SpawnStartingBlocks(stage);RefreshUI();Save();StartCoroutine(StageIntroRoutine());}
         public void ContinueGame()
         {
-            if (!File.Exists(SavePath)) { StartNewRun(); return; }
+            if (!File.Exists(SavePath) && !File.Exists(SaveBackupPath)) { StartNewRun(); return; }
             if (TryReadSave(SavePath, out var data)) { Restore(data); return; }
             Debug.LogWarning("[Save] Primary run save is invalid. Attempting the last atomic backup.");
             if (TryReadSave(SaveBackupPath, out data)) { Restore(data); Save(); return; }
@@ -277,10 +287,41 @@ namespace Reflectable
         {
             data=null;
             if(!File.Exists(path))return false;
-            try{data=JsonUtility.FromJson<ReflectableRunSave>(File.ReadAllText(path));return data!=null&&data.valid&&data.blocks!=null;}
+            try
+            {
+                data=JsonUtility.FromJson<ReflectableRunSave>(File.ReadAllText(path));
+                if(data==null||!data.valid||data.blocks==null||data.blocks.Count>1000)return false;
+                foreach(var block in data.blocks)
+                    if(block==null||block.row<0||block.row>32||block.column<0||block.column>=7||block.hp<=0||block.maxHp<block.hp||!Enum.IsDefined(typeof(ReflectableBlockType),block.type))return false;
+                return true; // version 0 is the pre-versioned save format and remains supported.
+            }
             catch(Exception exception){Debug.LogWarning("[Save] Failed to read "+path+": "+exception.Message);return false;}
         }
-        void Restore(ReflectableRunSave d){ClearBlocks();stage=Mathf.Clamp(d.stage>0?d.stage:ReflectableStageSession.ResolveSelectedStage(),1,ReflectableStageConfig.StageCount);ReflectableStageSession.SelectedStage=stage;ApplyStageVisual();turn=d.turn;SetHealth(Mathf.Min(d.hp,100),100);score=d.score;gems=d.gems;level=d.level;exp=d.exp;skillPoints=d.skillPoints;power=d.power;ricochet=d.ricochet;extraBall=d.extraBall;maxCombo=d.maxCombo;destroyed=d.destroyed;ricochets=d.ricochets;lightDamage=d.lightDamage;lightRange=d.lightRange;lightPierce=d.lightPierce;var target=ReflectableStageConfig.For(stage).BlockTarget;stageBlocks=Mathf.Clamp(d.stageBlocks,0,target);nextBossThreshold=((stageBlocks/ReflectableStageConfig.For(stage).BossInterval)+1)*ReflectableStageConfig.For(stage).BossInterval;bossActive=finalBossActive=false;bossQueued=false;stageCleared=false;stageClearPending=stageBlocks>=target;character=string.IsNullOrEmpty(d.character)?CharacterProgression.ActiveCharacterId:d.character.ToLowerInvariant();bool migratedCharacter=characterPresenter&&characterPresenter.Database&&!characterPresenter.Database.Find(character);if(migratedCharacter){Debug.LogWarning("[Save] Unknown legacy character '"+character+"' migrated to "+CharacterProgression.StarterId+".");character=CharacterProgression.StarterId;}rank=Mathf.Max(1,d.rank);CharacterProgression.SetActiveCharacter(character,rank);characterPresenter?.Present(character);feedback?.BindCharacter(characterPresenter);foreach(var c in d.blocks)CreateBlock(c.row,c.column,c.hp,c.maxHp,c.type);if(migratedCharacter)Save();if(stageClearPending){StartCoroutine(StageClearRoutine());return;}CheckBossMilestone();RefreshUI();BeginTurn();}
+        void Restore(ReflectableRunSave d)
+        {
+            StopAllCoroutines(); Time.timeScale=1f; ResolveActiveProjectiles(false); ClearBlocks();
+            stage=Mathf.Clamp(d.stage>0?d.stage:ReflectableStageSession.ResolveSelectedStage(),1,ReflectableStageConfig.StageCount);
+            ReflectableStageSession.SelectedStage=stage; ApplyStageVisual(); turn=Mathf.Max(0,d.turn);
+            SetHealth(Mathf.Clamp(d.hp,1,100),100); score=Mathf.Max(0,d.score); gems=Mathf.Max(0,d.gems);
+            level=Mathf.Max(1,d.level); exp=Mathf.Max(0,d.exp); skillPoints=Mathf.Max(0,d.skillPoints);
+            power=Mathf.Max(0,d.power); ricochet=Mathf.Max(0,d.ricochet); extraBall=Mathf.Max(0,d.extraBall);
+            maxCombo=Mathf.Max(0,d.maxCombo); destroyed=Mathf.Max(0,d.destroyed); ricochets=Mathf.Max(0,d.ricochets);
+            lightDamage=Mathf.Max(0,d.lightDamage); lightRange=Mathf.Max(0,d.lightRange); lightPierce=Mathf.Max(0,d.lightPierce);
+            var definition=ReflectableStageConfig.For(stage); var target=definition.BlockTarget;
+            stageBlocks=Mathf.Clamp(d.stageBlocks,0,target); nextBossThreshold=((stageBlocks/definition.BossInterval)+1)*definition.BossInterval;
+            bossActive=finalBossActive=bossQueued=stageCleared=false; stageClearPending=stageBlocks>=target;
+            character=string.IsNullOrEmpty(d.character)?CharacterProgression.ActiveCharacterId:d.character.ToLowerInvariant();
+            bool migratedCharacter=characterPresenter&&characterPresenter.Database&&!characterPresenter.Database.Find(character);
+            if(migratedCharacter){Debug.LogWarning("[Save] Unknown legacy character '"+character+"' migrated to "+CharacterProgression.StarterId+".");character=CharacterProgression.StarterId;}
+            rank=Mathf.Max(1,d.rank); CharacterProgression.SetActiveCharacter(character,rank); characterPresenter?.Present(character); feedback?.BindCharacter(characterPresenter);
+            foreach(var c in d.blocks) CreateBlock(c.row,c.column,c.hp,c.maxHp,c.type);
+            gameOver=ending=turnFired=aiming=skippingTurn=false; activeProjectileIds.Clear(); activeProjectiles=0;
+            if(stageClearPending){StartCoroutine(StageClearRoutine());return;}
+            CheckBossMilestone();
+            if(d.version<2||d.beginTurnOnRestore) BeginTurn();
+            else {state=TurnState.Aiming;aiming=true;if(aimPreview)aimPreview.enabled=true;UpdatePauseButton();RefreshUI();}
+            if(migratedCharacter)Save();
+        }
         void BeginTurn(){turn++;int completedCombo=combo;combo=0;feedback?.ComboEnded(completedCombo);turnFired=false;activeProjectileIds.Clear();activeProjectiles=0;ending=false;RollNyxBuff();if(character=="sakura"&&turn%4==0&&hp<maxHp)SetHealth(Mathf.Min(maxHp,hp+5),maxHp);state=TurnState.Aiming;aiming=true;if(aimPreview)aimPreview.enabled=true;UpdatePauseButton();RefreshUI();Debug.Log("[Turn] Ready Turn "+turn);}
         IEnumerator Fire(Vector2 direction){if(state!=TurnState.Aiming)yield break;aiming=false;state=TurnState.Firing;turnFired=true;RefreshSkipTurnButton();if(aimPreview)aimPreview.enabled=false;StartCoroutine(PlayerRecoil());int count=1+extraBall+(character=="stella"?1:0)+nyxExtraBalls;activeProjectileIds.Clear();activeProjectiles=0;Debug.Log("[Turn] Shooting | Damage "+ProjectileDamage());for(int i=0;i<count&&state==TurnState.Firing&&turnFired;i++){var go=Instantiate(projectilePrefab,firePoint.position,Quaternion.identity,projectilesRoot);var projectile=go.GetComponent<ReflectableProjectile>();RegisterProjectile(projectile);projectile.Launch(this,direction,projectileSpeed,ProjectileDamage());yield return new WaitForSeconds(launchSpacing);}Debug.Log("[Turn] Active projectiles: "+activeProjectiles);}
         int ProjectileDamage()=>Mathf.Max(1,Mathf.RoundToInt(ReflectableGameBalance.ProjectileDamage(power)*(1f+nyxDamageBonus)));
@@ -324,8 +365,8 @@ namespace Reflectable
         }
         Vector2 CellPosition(int row,int col)=>(Vector2)gridOrigin.position+new Vector2((col-(columns-1)*.5f)*cellSpacing.x,-row*cellSpacing.y);
         public void HitBlock(ReflectableBlockView block,int damage,bool canTriggerCharacter=true,ArcadeHitKind hitKind=ArcadeHitKind.Direct)=>HitBlock(block,damage,canTriggerCharacter,hitKind,block?block.transform.position:Vector3.zero,Vector2.zero);
-        public void HitBlock(ReflectableBlockView block,int damage,bool canTriggerCharacter,ArcadeHitKind hitKind,Vector2 impactPosition,Vector2 impactVelocity){if(!block||gameOver||stageTransitioning)return;combo++;maxCombo=Mathf.Max(maxCombo,combo);score+=10+combo/5;if(canTriggerCharacter){TriggerCharacterHit(block,damage);if(character=="ember")burningBlocks[block.GetInstanceID()]=3;}bool critical=UnityEngine.Random.value<(character=="aurora"?.25f:.05f+nyxCriticalBonus);float defense=block.Type==ReflectableBlockType.Elite?.80f:block.Type==ReflectableBlockType.Armored?.85f:block.Type==ReflectableBlockType.Anchor?.80f:1f;float criticalMultiplier=character=="aurora"?2.6f:2f;int dealt=Mathf.Max(1,Mathf.RoundToInt(damage*ReflectableGameBalance.ComboMultiplier(combo)*defense*(critical?criticalMultiplier:1f)));bool destroyedHit=block.HP-dealt<=0;block.ApplyDamage(dealt);feedback?.Hit(new ImpactData(impactPosition,impactVelocity.sqrMagnitude>.001f?impactVelocity.normalized:Vector2.zero,impactVelocity.magnitude,combo,destroyedHit,critical),dealt,hitKind);if(block.HP<=0)DestroyBlock(block,hitKind);RefreshUI();}
-        void DestroyBlock(ReflectableBlockView block,ArcadeHitKind hitKind=ArcadeHitKind.Direct){if(!blocks.Remove(block))return;MenuSettingsAudioMockup.PlayBlockBreak();burningBlocks.Remove(block.GetInstanceID());bool boss=block.Type==ReflectableBlockType.Boss;bool finalBossDefeated=boss&&finalBossActive;bool counted=block.Type==ReflectableBlockType.Normal||block.Type==ReflectableBlockType.Tough||block.Type==ReflectableBlockType.Armored||block.Type==ReflectableBlockType.Elite||block.Type==ReflectableBlockType.Anchor;feedback?.Destroyed(block,combo,block.Type==ReflectableBlockType.Bomb?ArcadeHitKind.Explosion:hitKind);destroyed++;skillPoints++;Debug.Log("[SP] +1 | Block destroyed | SP "+skillPoints);score+=boss?1000: block.Type==ReflectableBlockType.Gem?250:block.Type==ReflectableBlockType.Bomb?150:100;float progress=stageBlocks/(float)ReflectableStageConfig.For(stage).BlockTarget;int reward=boss?ReflectableGameBalance.BossExperience(block.MaxHP):ReflectableGameBalance.BlockExperience(block.Type,block.MaxHP,progress);int expGain=Mathf.RoundToInt(reward*ReflectableGameBalance.ComboExpMultiplier(combo)*ReflectableStageConfig.For(stage).RewardMultiplier);exp+=expGain;Debug.Log("[EXP] +"+expGain);if(counted&&stageBlocks<ReflectableStageConfig.For(stage).BlockTarget){stageBlocks++;Debug.Log("[Stage] Progress "+stageBlocks+" / "+ReflectableStageConfig.For(stage).BlockTarget);if(stageBlocks>=ReflectableStageConfig.For(stage).BlockTarget){stageBlocks=ReflectableStageConfig.For(stage).BlockTarget;stageClearPending=true;Debug.Log("[Stage] Target reached. Stage clear pending until the current shot resolves.");}else CheckBossMilestone();}if(block.Type==ReflectableBlockType.Gem)gems+=2+(character=="iris"?2:0)+nyxGemBonus;if(block.Type==ReflectableBlockType.Bomb)foreach(var other in blocks.ToArray())if(other&&Mathf.Abs(other.Row-block.Row)<=1&&Mathf.Abs(other.Column-block.Column)<=1)HitBlock(other,Mathf.Max(3,block.MaxHP/2),false,ArcadeHitKind.Explosion);if(boss){bossActive=false;finalBossActive=false;gems+=2;StartCoroutine(BossDefeatedRoutine(finalBossDefeated));}while(exp>=ExpNeeded){exp-=ExpNeeded;int previous=level;level++;Debug.Log("[EXP] Level "+previous+" -> "+level);}StartCoroutine(FadeDestroy(block));RefreshUI();} int ExpNeeded=>ReflectableGameBalance.ExpRequired(level);
+         public void HitBlock(ReflectableBlockView block,int damage,bool canTriggerCharacter,ArcadeHitKind hitKind,Vector2 impactPosition,Vector2 impactVelocity){if(!block||gameOver||stageTransitioning)return;combo++;maxCombo=Mathf.Max(maxCombo,combo);score+=10+combo/5;CommitBestScore();if(canTriggerCharacter){TriggerCharacterHit(block,damage);if(character=="ember")burningBlocks[block.GetInstanceID()]=3;}bool critical=UnityEngine.Random.value<(character=="aurora"?.25f:.05f+nyxCriticalBonus);float defense=block.Type==ReflectableBlockType.Elite?.80f:block.Type==ReflectableBlockType.Armored?.85f:block.Type==ReflectableBlockType.Anchor?.80f:1f;float criticalMultiplier=character=="aurora"?2.6f:2f;int dealt=Mathf.Max(1,Mathf.RoundToInt(damage*ReflectableGameBalance.ComboMultiplier(combo)*defense*(critical?criticalMultiplier:1f)));bool destroyedHit=block.HP-dealt<=0;block.ApplyDamage(dealt);feedback?.Hit(new ImpactData(impactPosition,impactVelocity.sqrMagnitude>.001f?impactVelocity.normalized:Vector2.zero,impactVelocity.magnitude,combo,destroyedHit,critical),dealt,hitKind);if(block.HP<=0)DestroyBlock(block,hitKind);RefreshUI();}
+        void DestroyBlock(ReflectableBlockView block,ArcadeHitKind hitKind=ArcadeHitKind.Direct){if(!blocks.Remove(block))return;MenuSettingsAudioMockup.PlayBlockBreak();burningBlocks.Remove(block.GetInstanceID());bool boss=block.Type==ReflectableBlockType.Boss;bool finalBossDefeated=boss&&finalBossActive;bool counted=block.Type==ReflectableBlockType.Normal||block.Type==ReflectableBlockType.Tough||block.Type==ReflectableBlockType.Armored||block.Type==ReflectableBlockType.Elite||block.Type==ReflectableBlockType.Anchor;feedback?.Destroyed(block,combo,block.Type==ReflectableBlockType.Bomb?ArcadeHitKind.Explosion:hitKind);destroyed++;skillPoints++;Debug.Log("[SP] +1 | Block destroyed | SP "+skillPoints);score+=boss?1000: block.Type==ReflectableBlockType.Gem?250:block.Type==ReflectableBlockType.Bomb?150:100;CommitBestScore();float progress=stageBlocks/(float)ReflectableStageConfig.For(stage).BlockTarget;int reward=boss?ReflectableGameBalance.BossExperience(block.MaxHP):ReflectableGameBalance.BlockExperience(block.Type,block.MaxHP,progress);int expGain=Mathf.RoundToInt(reward*ReflectableGameBalance.ComboExpMultiplier(combo)*ReflectableStageConfig.For(stage).RewardMultiplier);exp+=expGain;Debug.Log("[EXP] +"+expGain);if(counted&&stageBlocks<ReflectableStageConfig.For(stage).BlockTarget){stageBlocks++;Debug.Log("[Stage] Progress "+stageBlocks+" / "+ReflectableStageConfig.For(stage).BlockTarget);if(stageBlocks>=ReflectableStageConfig.For(stage).BlockTarget){stageBlocks=ReflectableStageConfig.For(stage).BlockTarget;stageClearPending=true;Debug.Log("[Stage] Target reached. Stage clear pending until the current shot resolves.");}else CheckBossMilestone();}if(block.Type==ReflectableBlockType.Gem)gems+=2+(character=="iris"?2:0)+nyxGemBonus;if(block.Type==ReflectableBlockType.Bomb)foreach(var other in blocks.ToArray())if(other&&Mathf.Abs(other.Row-block.Row)<=1&&Mathf.Abs(other.Column-block.Column)<=1)HitBlock(other,Mathf.Max(3,block.MaxHP/2),false,ArcadeHitKind.Explosion);if(boss){bossActive=false;finalBossActive=false;gems+=2;StartCoroutine(BossDefeatedRoutine(finalBossDefeated));}while(exp>=ExpNeeded){exp-=ExpNeeded;int previous=level;level++;Debug.Log("[EXP] Level "+previous+" -> "+level);}StartCoroutine(FadeDestroy(block));RefreshUI();} int ExpNeeded=>ReflectableGameBalance.ExpRequired(level);
         void CheckBossMilestone(){var definition=ReflectableStageConfig.For(stage);if(stageClearPending||stageBlocks>=definition.BlockTarget)return;while(stageBlocks>=nextBossThreshold&&nextBossThreshold<definition.BlockTarget){bossQueued=true;nextBossThreshold+=definition.BossInterval;}if(!bossActive&&bossQueued)SpawnBoss();}
         void SpawnBoss(){if(bossActive||stageTransitioning)return;bossQueued=false;bossActive=true;bossNumber++;bool finalBoss=stageBlocks>=ReflectableStageConfig.For(stage).BlockTarget;finalBossActive=finalBoss;int hp=ReflectableGameBalance.BossHp(stage,bossNumber,finalBoss);int row=2;while(blocks.Exists(b=>b&&b.Row==row&&b.Column==3))row++;CreateBlock(row,3,hp,hp,ReflectableBlockType.Boss);StartCoroutine(BossIncomingRoutine(finalBoss,hp));Debug.Log(finalBoss?"[Stage] Final Boss spawned":"[Boss] Spawned #"+bossNumber+" HP "+hp+" at "+stageBlocks+" blocks.");}
         IEnumerator BossIncomingRoutine(bool finalBoss,int hp){if(stageIntro){stageIntro.SetActive(true);var label=stageIntro.GetComponentInChildren<Text>();if(label)label.text=finalBoss?"FINAL BOSS\nINCOMING":"BOSS INCOMING\n"+stageBlocks+" BLOCKS";yield return new WaitForSecondsRealtime(.85f);stageIntro.SetActive(false);}if(comboText)comboText.text="BOSS  "+hp+" HP";}
@@ -356,17 +397,26 @@ namespace Reflectable
         public void CancelMainMenu(){if(mainMenuConfirmPanel)mainMenuConfirmPanel.SetActive(false);if(!gameOver&&pausePanel)pausePanel.SetActive(true);}
         public void ConfirmMainMenu(){Save();Time.timeScale=1;SceneManager.LoadScene("MainMenu");}
         public void MainMenu(){Time.timeScale=1;SceneManager.LoadScene("MainMenu");}public void Retry(){Time.timeScale=1;StartNewRun();}
-        void GameOver(){gameOver=true;feedback?.CancelTimeEffects();feedback?.ComboEnded(combo);state=TurnState.GameOver;aiming=false;if(aimPreview)aimPreview.enabled=false;if(pausePanel)pausePanel.SetActive(false);if(pauseSettingsPanel)pauseSettingsPanel.SetActive(false);if(mainMenuConfirmPanel)mainMenuConfirmPanel.SetActive(false);UpdatePauseButton();RefreshSkipTurnButton();PlayerPrefs.SetInt("ReflectableBest",Mathf.Max(PlayerPrefs.GetInt("ReflectableBest",0),score));PlayerPrefs.Save();DeleteRunSaveFiles();if(gameOverText)gameOverText.text=$"GAME OVER\nScore {score}\nBest {PlayerPrefs.GetInt("ReflectableBest",0)}\nTurn {turn}\nBlocks {destroyed}\nMax Combo {maxCombo}\nRicochets {ricochets}";if(gameOverPanel)gameOverPanel.SetActive(true);}
+         void GameOver(){gameOver=true;feedback?.CancelTimeEffects();feedback?.ComboEnded(combo);state=TurnState.GameOver;aiming=false;if(aimPreview)aimPreview.enabled=false;if(pausePanel)pausePanel.SetActive(false);if(pauseSettingsPanel)pauseSettingsPanel.SetActive(false);if(mainMenuConfirmPanel)mainMenuConfirmPanel.SetActive(false);UpdatePauseButton();RefreshSkipTurnButton();CommitBestScore();DeleteRunSaveFiles();if(gameOverText)gameOverText.text=$"GAME OVER\nScore {score}\nBest {PlayerPrefs.GetInt("ReflectableBest",0)}\nTurn {turn}\nBlocks {destroyed}\nMax Combo {maxCombo}\nRicochets {ricochets}";if(gameOverPanel)gameOverPanel.SetActive(true);}
+         void CommitBestScore(){int best=PlayerPrefs.GetInt("ReflectableBest",0);if(score>best){PlayerPrefs.SetInt("ReflectableBest",score);PlayerPrefs.Save();FlushPersistentStorage();}}
         void DeleteRunSaveFiles(){foreach(var path in new[]{SavePath,SaveBackupPath,SaveTempPath})try{if(File.Exists(path))File.Delete(path);}catch(Exception exception){Debug.LogWarning("[Save] Could not delete "+path+": "+exception.Message);}}
         void Save()
         {
-            var d=new ReflectableRunSave{valid=true,stage=stage,turn=turn,hp=hp,maxHp=maxHp,score=score,gems=gems,level=level,exp=exp,skillPoints=skillPoints,power=power,ricochet=ricochet,extraBall=extraBall,maxCombo=maxCombo,destroyed=destroyed,stageBlocks=stageBlocks,ricochets=ricochets,lightDamage=lightDamage,lightRange=lightRange,lightPierce=lightPierce,character=character,rank=rank};
+            var d=new ReflectableRunSave{valid=true,beginTurnOnRestore=state==TurnState.Resolving&&(ending||stageTransitioning),stage=stage,turn=turn,hp=hp,maxHp=maxHp,score=score,gems=gems,level=level,exp=exp,skillPoints=skillPoints,power=power,ricochet=ricochet,extraBall=extraBall,maxCombo=maxCombo,destroyed=destroyed,stageBlocks=stageBlocks,ricochets=ricochets,lightDamage=lightDamage,lightRange=lightRange,lightPierce=lightPierce,character=character,rank=rank};
             foreach(var b in blocks)if(b)d.blocks.Add(new ReflectableCellSave{row=b.Row,column=b.Column,hp=b.HP,maxHp=b.MaxHP,type=b.Type});
             try
             {
                 File.WriteAllText(SaveTempPath,JsonUtility.ToJson(d));
-                if(File.Exists(SavePath))File.Replace(SaveTempPath,SavePath,SaveBackupPath);
-                else File.Move(SaveTempPath,SavePath);
+                if(!TryReadSave(SaveTempPath,out _)) throw new InvalidDataException("The newly written temporary save did not pass validation.");
+                // File.Replace is not consistently implemented by Unity's WebGL virtual filesystem.
+                // Keep a recoverable copy, then promote the fully written temporary file.
+                if(TryReadSave(SavePath,out _))
+                {
+                    File.Copy(SavePath,SaveBackupPath,true);
+                }
+                if(File.Exists(SavePath)) File.Delete(SavePath);
+                File.Move(SaveTempPath,SavePath);
+                FlushPersistentStorage();
             }
             catch(Exception exception)
             {
@@ -431,6 +481,6 @@ namespace Reflectable
             aimPreview.positionCount = count;
             aimPreview.SetPositions(points);
         }
-        void ClearBlocks(){foreach(var b in blocks)if(b)Destroy(b.gameObject);blocks.Clear();burningBlocks.Clear();}void OnDrawGizmosSelected(){if(!gridOrigin)return;Gizmos.color=Color.cyan;for(int r=0;r<rows;r++)for(int c=0;c<columns;c++)Gizmos.DrawWireCube(CellPosition(r,c),new Vector3(cellSpacing.x*.9f,cellSpacing.y*.85f,.05f));if(!drawPlayerDamageDebug||characterPresenter==null||characterPresenter.GameplayHitbox==null)return;var bounds=characterPresenter.GameplayHitbox.bounds;Gizmos.color=Color.yellow;Gizmos.DrawWireCube(bounds.center,bounds.size);Gizmos.color=Color.red;Gizmos.DrawLine(new Vector3(left,bounds.max.y,0),new Vector3(right,bounds.max.y,0));}
+        void ClearBlocks(){foreach(var b in blocks)if(b){b.gameObject.SetActive(false);Destroy(b.gameObject);}blocks.Clear();burningBlocks.Clear();}void OnDrawGizmosSelected(){if(!gridOrigin)return;Gizmos.color=Color.cyan;for(int r=0;r<rows;r++)for(int c=0;c<columns;c++)Gizmos.DrawWireCube(CellPosition(r,c),new Vector3(cellSpacing.x*.9f,cellSpacing.y*.85f,.05f));if(!drawPlayerDamageDebug||characterPresenter==null||characterPresenter.GameplayHitbox==null)return;var bounds=characterPresenter.GameplayHitbox.bounds;Gizmos.color=Color.yellow;Gizmos.DrawWireCube(bounds.center,bounds.size);Gizmos.color=Color.red;Gizmos.DrawLine(new Vector3(left,bounds.max.y,0),new Vector3(right,bounds.max.y,0));}
     }
 }
