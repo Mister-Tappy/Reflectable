@@ -3050,6 +3050,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 973318714}
+  - component: {fileID: 973318715}
   - component: {fileID: 2106000062}
   m_Layer: 0
   m_Name: SettingsPanel
@@ -3058,6 +3059,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 0
+--- !u!225 &973318715
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 973318713}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!4 &973318714
 Transform:
   m_ObjectHideFlags: 0
@@ -5554,6 +5567,8 @@ MonoBehaviour:
   worldRoot: {fileID: 675026669}
   startPoint: {fileID: 3000000012}
   menuBall: {fileID: 3000000062}
+  continuePanel: {fileID: 4100000047}
+  exitPanel: {fileID: 4100000084}
   backgroundLayerSprite: {fileID: 0}
   islandSurfaceSprite: {fileID: 0}
   ballSprite: {fileID: 0}

@@ -314,13 +314,30 @@ namespace Reflectable
             bool migratedCharacter=characterPresenter&&characterPresenter.Database&&!characterPresenter.Database.Find(character);
             if(migratedCharacter){Debug.LogWarning("[Save] Unknown legacy character '"+character+"' migrated to "+CharacterProgression.StarterId+".");character=CharacterProgression.StarterId;}
             rank=Mathf.Max(1,d.rank); CharacterProgression.SetActiveCharacter(character,rank); characterPresenter?.Present(character); feedback?.BindCharacter(characterPresenter);
-            foreach(var c in d.blocks) CreateBlock(c.row,c.column,c.hp,c.maxHp,c.type);
+            // Older or interrupted saves can contain more than one entry for a cell.
+            // Keep the strongest saved block at each grid position so restore cannot
+            // stack duplicate colliders or make a block appear to have the wrong value.
+            var restoredCells = new Dictionary<int, ReflectableCellSave>();
+            foreach(var c in d.blocks)
+            {
+                int cellKey = c.row * columns + c.column;
+                if (restoredCells.TryGetValue(cellKey, out var existing))
+                {
+                    Debug.LogWarning("[Save] Ignoring duplicate block at row " + c.row + ", column " + c.column + ".");
+                    if (c.hp > existing.hp) restoredCells[cellKey] = c;
+                    continue;
+                }
+                restoredCells.Add(cellKey, c);
+            }
+            foreach(var c in restoredCells.Values) CreateBlock(c.row,c.column,c.hp,c.maxHp,c.type);
             gameOver=ending=turnFired=aiming=skippingTurn=false; activeProjectileIds.Clear(); activeProjectiles=0;
             if(stageClearPending){StartCoroutine(StageClearRoutine());return;}
             CheckBossMilestone();
             if(d.version<2||d.beginTurnOnRestore) BeginTurn();
             else {state=TurnState.Aiming;aiming=true;if(aimPreview)aimPreview.enabled=true;UpdatePauseButton();RefreshUI();}
-            if(migratedCharacter)Save();
+            // Normalize migrated/legacy saves and persist the exact block set now
+            // that the restored turn is fully initialized.
+            Save();
         }
         void BeginTurn(){turn++;int completedCombo=combo;combo=0;feedback?.ComboEnded(completedCombo);turnFired=false;activeProjectileIds.Clear();activeProjectiles=0;ending=false;RollNyxBuff();if(character=="sakura"&&turn%4==0&&hp<maxHp)SetHealth(Mathf.Min(maxHp,hp+5),maxHp);state=TurnState.Aiming;aiming=true;if(aimPreview)aimPreview.enabled=true;UpdatePauseButton();RefreshUI();Debug.Log("[Turn] Ready Turn "+turn);}
         IEnumerator Fire(Vector2 direction){if(state!=TurnState.Aiming)yield break;aiming=false;state=TurnState.Firing;turnFired=true;RefreshSkipTurnButton();if(aimPreview)aimPreview.enabled=false;StartCoroutine(PlayerRecoil());int count=1+extraBall+(character=="stella"?1:0)+nyxExtraBalls;activeProjectileIds.Clear();activeProjectiles=0;Debug.Log("[Turn] Shooting | Damage "+ProjectileDamage());for(int i=0;i<count&&state==TurnState.Firing&&turnFired;i++){var go=Instantiate(projectilePrefab,firePoint.position,Quaternion.identity,projectilesRoot);var projectile=go.GetComponent<ReflectableProjectile>();RegisterProjectile(projectile);projectile.Launch(this,direction,projectileSpeed,ProjectileDamage());yield return new WaitForSeconds(launchSpacing);}Debug.Log("[Turn] Active projectiles: "+activeProjectiles);}
@@ -333,7 +350,24 @@ namespace Reflectable
         ReflectableBlockType RollBlockType(){var definition=ReflectableStageConfig.For(stage);float progress=stageBlocks/(float)definition.BlockTarget;float roll=UnityEngine.Random.value;float gemChance=definition.GemChance*(character=="iris"?1.75f:1f);if(roll<gemChance)return ReflectableBlockType.Gem;if(roll<gemChance+definition.BombChance)return ReflectableBlockType.Bomb;if(progress<.25f)return roll<.80f?ReflectableBlockType.Normal:ReflectableBlockType.Tough;if(progress<.50f)return roll<.55f?ReflectableBlockType.Normal:roll<.85f?ReflectableBlockType.Tough:ReflectableBlockType.Armored;if(progress<.75f)return roll<.40f?ReflectableBlockType.Normal:roll<.72f?ReflectableBlockType.Tough:roll<.94f?ReflectableBlockType.Armored:ReflectableBlockType.Elite;return roll<.43f?ReflectableBlockType.Normal:roll<.73f?ReflectableBlockType.Tough:roll<.93f?ReflectableBlockType.Armored:roll<.98f?ReflectableBlockType.Elite:ReflectableBlockType.Anchor;}
         int BlockHealth(ReflectableBlockType type)=>Mathf.Max(1,ReflectableGameBalance.BlockHp(stage,stageBlocks,type));
         void SpawnStartingBlocks(int stage){var definition=ReflectableStageConfig.For(stage);var opening=new[]{new Vector2Int(0,1),new Vector2Int(0,5),new Vector2Int(1,3),new Vector2Int(1,0),new Vector2Int(1,6)};for(int i=0;i<Mathf.Min(definition.StartingBlockCount,opening.Length);i++){var type=i==1?ReflectableBlockType.Tough:i==2?ReflectableBlockType.Gem:ReflectableBlockType.Normal;int hp=BlockHealth(type);CreateBlock(opening[i].x,opening[i].y,hp,hp,type);}Debug.Log("Reflectable: Stage "+stage+" spawned progression opening.");}
-        void CreateBlock(int row,int column,int currentHp,int maximumHp,ReflectableBlockType type){var definition=ReflectableStageConfig.For(stage);var data=ReflectableBlockVisualCatalog.For(type);var prefab=data&&data.prefab?data.prefab:type==ReflectableBlockType.Gem?gemBlockPrefab:type==ReflectableBlockType.Bomb?bombBlockPrefab:normalBlockPrefab;var view=Instantiate(prefab,CellPosition(row,column),Quaternion.identity,blocksRoot).GetComponent<ReflectableBlockView>();view.Setup(this,row,column,currentHp,maximumHp,type);var overrideVisual=view.GetComponent<ReflectableBlockVisualOverride>();if(!overrideVisual)overrideVisual=view.gameObject.AddComponent<ReflectableBlockVisualOverride>();overrideVisual.Configure(data,definition.Data!=null?definition.Data.blockPalette:null);blocks.Add(view);}
+        void CreateBlock(int row,int column,int currentHp,int maximumHp,ReflectableBlockType type){var definition=ReflectableStageConfig.For(stage);var data=ReflectableBlockVisualCatalog.For(type);var prefab=data&&data.prefab?data.prefab:type==ReflectableBlockType.Gem?gemBlockPrefab:type==ReflectableBlockType.Bomb?bombBlockPrefab:normalBlockPrefab;var view=Instantiate(prefab,CellPosition(row,column),Quaternion.identity,blocksRoot).GetComponent<ReflectableBlockView>();view.Setup(this,row,column,currentHp,maximumHp,type);var overrideVisual=view.GetComponent<ReflectableBlockVisualOverride>();if(!overrideVisual)overrideVisual=view.gameObject.AddComponent<ReflectableBlockVisualOverride>();overrideVisual.Configure(data,definition.Data!=null?definition.Data.blockPalette:null);SetBlockRenderOrder(view);blocks.Add(view);}
+        static void SetBlockRenderOrder(ReflectableBlockView block)
+        {
+            if (!block) return;
+            var visual = block.transform.Find("Visual") ?? block.transform;
+            foreach (var renderer in visual.GetComponentsInChildren<SpriteRenderer>(true))
+                if (renderer) renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, 20);
+
+            // Block HP uses a world-space Canvas. Give it an explicit order above
+            // the sprites so changing SpriteRenderer order cannot cover the value.
+            var hpLabel = block.GetComponentInChildren<Text>(true);
+            var labelCanvas = hpLabel ? hpLabel.GetComponentInParent<Canvas>() : null;
+            if (labelCanvas)
+            {
+                labelCanvas.overrideSorting = true;
+                labelCanvas.sortingOrder = Mathf.Max(labelCanvas.sortingOrder, 21);
+            }
+        }
         void ApplyStageVisual()
         {
             if (!stageVisualContainer) return;
@@ -361,7 +395,21 @@ namespace Reflectable
                     "' instead of a GameObject. Reimport its stage prefab and Stage Data asset.");
             }
             CacheAndFitTiledStageBackgrounds(activeStageVisual);
+            // Stage prefabs include a few foreground sprites at order 0. Keep the
+            // arena rails above that artwork so the playfield remains readable.
+            var arena = stageVisualContainer ? stageVisualContainer.parent : null;
+            if (arena)
+            {
+                SetArenaRenderOrder(arena.Find("LeftWall"), 10);
+                SetArenaRenderOrder(arena.Find("RightWall"), 10);
+            }
             feedback?.BindStageVisual(activeStageVisual);
+        }
+        static void SetArenaRenderOrder(Transform root, int sortingOrder)
+        {
+            if (!root) return;
+            foreach (var renderer in root.GetComponentsInChildren<SpriteRenderer>(true))
+                if (renderer) renderer.sortingOrder = Mathf.Max(renderer.sortingOrder, sortingOrder);
         }
         Vector2 CellPosition(int row,int col)=>(Vector2)gridOrigin.position+new Vector2((col-(columns-1)*.5f)*cellSpacing.x,-row*cellSpacing.y);
         public void HitBlock(ReflectableBlockView block,int damage,bool canTriggerCharacter=true,ArcadeHitKind hitKind=ArcadeHitKind.Direct)=>HitBlock(block,damage,canTriggerCharacter,hitKind,block?block.transform.position:Vector3.zero,Vector2.zero);

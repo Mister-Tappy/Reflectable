@@ -63,7 +63,7 @@ namespace Reflectable
         ReflectableMenuController menuController;
         MenuCameraFollow2D cameraFollow;
         Camera sceneCamera;
-        GameObject continuePanel, exitPanel;
+        [SerializeField] GameObject continuePanel, exitPanel;
         Transform farClouds, nearClouds;
         Transform ball;
         SpriteRenderer ballRenderer, ballGlow;
@@ -78,6 +78,7 @@ namespace Reflectable
         int waveCursor;
         int particleCursor;
         bool worldBuilt;
+        bool travelInProgress;
 
         public MenuNavigationState State { get; private set; } = MenuNavigationState.MainMenu;
         public MenuDestination CurrentDestination { get; private set; }
@@ -117,17 +118,22 @@ namespace Reflectable
         public bool NavigateTo(MenuDestination destination)
         {
             if (!enabled) return false;
-            if (State != MenuNavigationState.MainMenu) return true;
+            if (travelInProgress || State != MenuNavigationState.MainMenu) return true;
             if (destination == MenuDestination.Continue && !menuController) return false;
             CurrentDestination = destination;
+            travelInProgress = true;
+            State = MenuNavigationState.LaunchingBall;
             StartCoroutine(TravelSequence(destination, false));
             return true;
         }
 
         public bool ReturnToMainMenu()
         {
+            if (travelInProgress) return true;
             if (State == MenuNavigationState.MainMenu) return false;
             if (State != MenuNavigationState.DestinationMenu && !(State == MenuNavigationState.Exiting && ExitIsMocked)) return true;
+            travelInProgress = true;
+            State = MenuNavigationState.ReturningToStart;
             StartCoroutine(TravelSequence(CurrentDestination, true));
             return true;
         }
@@ -321,33 +327,50 @@ namespace Reflectable
 
         void BindDestinationPanels()
         {
-            continuePanel = FindDestinationPanel("ContinueDestinationPanel");
-            exitPanel = FindDestinationPanel("ExitDestinationPanel");
+            if (!continuePanel) continuePanel = FindDestinationPanel("ContinueDestinationPanel");
+            if (!exitPanel) exitPanel = FindDestinationPanel("ExitDestinationPanel");
             if (!continuePanel || !exitPanel)
             {
-                Debug.LogError("MainMenu scene needs editable ContinueDestinationPanel and ExitDestinationPanel objects under its Canvas.", this);
-                enabled = false;
-                return;
+                Debug.LogError("MainMenu is missing ContinueDestinationPanel or ExitDestinationPanel in the loaded scene. Ball travel remains enabled.", this);
             }
 
-            var savePath = System.IO.Path.Combine(Application.persistentDataPath, "reflectable_run.json");
-            var hasSave = System.IO.File.Exists(savePath) || System.IO.File.Exists(savePath + ".bak");
-            var saveStatus = continuePanel.transform.Find("Card/SaveStatusText")?.GetComponent<Text>();
-            if (saveStatus) saveStatus.text = hasSave ? "A saved run is ready." : "No saved run found yet.";
-            BindDestinationButton(continuePanel, "ContinueRunButton", hasSave ? "CONTINUE RUN" : "NO SAVED RUN", !hasSave, () => menuController?.ContinueRunNow());
-            BindDestinationButton(continuePanel, "BackButton", "BACK", false, () => ReturnToMainMenu());
-            continuePanel.SetActive(false);
+            if (continuePanel)
+            {
+                var savePath = System.IO.Path.Combine(Application.persistentDataPath, "reflectable_run.json");
+                var hasSave = System.IO.File.Exists(savePath) || System.IO.File.Exists(savePath + ".bak");
+                var saveStatus = continuePanel.transform.Find("Card/SaveStatusText")?.GetComponent<Text>();
+                if (saveStatus) saveStatus.text = hasSave ? "A saved run is ready." : "No saved run found yet.";
+                BindDestinationButton(continuePanel, "ContinueRunButton", hasSave ? "CONTINUE RUN" : "NO SAVED RUN", !hasSave, () => menuController?.ContinueRunNow());
+                BindDestinationButton(continuePanel, "BackButton", "BACK", false, () => ReturnToMainMenu());
+                continuePanel.SetActive(false);
+            }
 
-            BindDestinationButton(exitPanel, "ExitBackButton", "BACK", false, () => ReturnToMainMenu());
-            exitPanel.SetActive(false);
+            if (exitPanel)
+            {
+                BindDestinationButton(exitPanel, "ExitBackButton", "BACK", false, () => ReturnToMainMenu());
+                exitPanel.SetActive(false);
+            }
         }
 
         GameObject FindDestinationPanel(string panelName)
         {
-            var canvas = FindFirstObjectByType<Canvas>();
-            if (!canvas) return null;
-            var panel = canvas.transform.Find(panelName);
-            return panel ? panel.gameObject : null;
+            // Search inactive panels too. The destination panels intentionally start
+            // inactive, and scene editing can place them deeper than a direct Canvas child.
+            var sceneCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var canvas in sceneCanvases)
+            {
+                if (!canvas || canvas.gameObject.scene != gameObject.scene) continue;
+                foreach (var child in canvas.GetComponentsInChildren<Transform>(true))
+                    if (child && child.name == panelName) return child.gameObject;
+            }
+
+            // Preserve menu travel even if a panel has been moved outside the Canvas.
+            // This scene-scoped fallback avoids accidentally binding a prefab asset or
+            // an object from another additive scene.
+            foreach (var transform in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+                if (transform && transform.gameObject.scene == gameObject.scene && transform.name == panelName)
+                    return transform.gameObject;
+            return null;
         }
 
         void BindDestinationButton(GameObject panel, string buttonName, string label, bool disabled, Action clicked)
@@ -389,7 +412,10 @@ namespace Reflectable
             PlayWave(ball.position, new Color(.7f, .89f, 1f, .76f), .22f, .24f);
 
             Transform targetTransform = returning ? null : landingTargets.TryGetValue(destination, out var foundTarget) ? foundTarget : null;
-            Vector3 destinationPosition = returning ? startPosition : targetTransform ? targetTransform.position : startPosition;
+            bool hasDestination = returning || (targetTransform && targetTransform.gameObject.activeInHierarchy);
+            if (!returning && !hasDestination)
+                Debug.LogWarning("Menu destination " + destination + " has no active LandingPoint; opening its panel without ball travel.", this);
+            Vector3 destinationPosition = returning ? startPosition : hasDestination ? targetTransform.position : ball.position;
             Vector3 origin = ball.position;
             Vector3 delta = destinationPosition - origin;
             Vector3 controlA = origin + delta * .28f + Vector3.up * arcHeight;
@@ -400,7 +426,7 @@ namespace Reflectable
             Vector3 previous = origin;
             State = returning ? MenuNavigationState.ReturningToStart : MenuNavigationState.FollowingBall;
 
-            while (elapsed < travelDuration)
+            while (hasDestination && elapsed < travelDuration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float t = Mathf.Clamp01(elapsed / travelDuration);
@@ -440,6 +466,7 @@ namespace Reflectable
                 menuController.ShowMainMenuAfterTravel();
                 State = MenuNavigationState.MainMenu;
                 SetMenuButtons(true);
+                travelInProgress = false;
                 yield break;
             }
 
@@ -463,6 +490,7 @@ namespace Reflectable
                     else { State = MenuNavigationState.Exiting; Application.Quit(); }
                     break;
             }
+            travelInProgress = false;
         }
 
         IEnumerator SettleCamera(Vector3 destination)
@@ -482,7 +510,15 @@ namespace Reflectable
         {
             if (!panel) yield break;
             panel.SetActive(true);
-            var group = panel.GetComponent<CanvasGroup>() ?? panel.AddComponent<CanvasGroup>();
+            var group = panel.GetComponent<CanvasGroup>();
+            // Unity objects can become fake-null when a component is removed during
+            // the same transition, so use Unity's overloaded bool check before fading.
+            if (!group) group = panel.AddComponent<CanvasGroup>();
+            if (!group)
+            {
+                Debug.LogWarning("Panel " + panel.name + " has no usable CanvasGroup; showing it without a fade.", panel);
+                yield break;
+            }
             var rect = panel.transform as RectTransform;
             if (rect) rect.localScale = Vector3.one * .96f;
             for (float time = 0f; time < .24f; time += Time.unscaledDeltaTime)

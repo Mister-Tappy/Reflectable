@@ -202,6 +202,7 @@ namespace Reflectable
         {
             if (!File.Exists(SavePath) && !File.Exists(SavePath + ".bak")) return;
             PlayerPrefs.SetInt("ReflectableContinue", 1);
+            PlayerPrefs.Save();
             SceneManager.LoadScene("Game");
         }
 
