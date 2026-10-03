@@ -12,7 +12,11 @@ namespace Reflectable
 
         public void Configure(RectTransform root) => safeAreaRoot = root;
 
-        void OnEnable() => ApplySafeArea();
+        void OnEnable()
+        {
+            if (Application.isPlaying) EnsureSafeAreaRoot();
+            ApplySafeArea();
+        }
         void Update()
         {
             var resolution = new Vector2Int(Screen.width, Screen.height);
@@ -28,6 +32,37 @@ namespace Reflectable
             safeAreaRoot.offsetMin = safeAreaRoot.offsetMax = Vector2.zero;
             lastSafeArea = safe;
             lastScreen = new Vector2Int(Screen.width, Screen.height);
+        }
+
+        void EnsureSafeAreaRoot()
+        {
+            var canvas = GetComponent<Canvas>();
+            var canvasRoot = canvas ? canvas.transform as RectTransform : null;
+            if (!canvasRoot || (safeAreaRoot && safeAreaRoot != canvasRoot)) return;
+
+            var root = canvasRoot.Find("SafeAreaRoot") as RectTransform;
+            if (!root)
+            {
+                var rootObject = new GameObject("SafeAreaRoot", typeof(RectTransform));
+                root = rootObject.GetComponent<RectTransform>();
+                root.SetParent(canvasRoot, false);
+                root.anchorMin = Vector2.zero;
+                root.anchorMax = Vector2.one;
+                root.offsetMin = root.offsetMax = Vector2.zero;
+                root.pivot = new Vector2(.5f, .5f);
+
+                var existingChildren = new Transform[canvasRoot.childCount - 1];
+                int childIndex = 0;
+                for (int i = 0; i < canvasRoot.childCount; i++)
+                {
+                    var child = canvasRoot.GetChild(i);
+                    if (child != root) existingChildren[childIndex++] = child;
+                }
+                foreach (var child in existingChildren)
+                    if (child) child.SetParent(root, false);
+            }
+
+            safeAreaRoot = root;
         }
 
         public bool FitsResolution(int width, int height)

@@ -27,12 +27,14 @@ namespace Reflectable
         readonly HashSet<int> activeProjectileIds = new HashSet<int>();
         readonly Dictionary<int,int> burningBlocks = new Dictionary<int,int>();
         struct TiledBackdropSize { public SpriteRenderer renderer; public Vector2 size; }
+        struct StageBackdropCover { public SpriteRenderer renderer; public Vector3 localScale; public Vector2 worldSize; }
         readonly List<TiledBackdropSize> tiledBackdropSizes = new List<TiledBackdropSize>();
         readonly List<RaycastResult> touchUiHits = new List<RaycastResult>(8);
         PointerEventData touchPointerData;
         EventSystem touchEventSystem;
         int activeAimFingerId = -1, viewportWidth = -1, viewportHeight = -1;
         float designCameraSize = 6.2f;
+        StageBackdropCover stageBackdropCover;
         int turn,hp,maxHp,score,gems,level,exp,skillPoints,power,ricochet,extraBall,combo,maxCombo,destroyed,ricochets,rank,stage,stageBlocks,nextBossThreshold,bossNumber,lightDamage,lightRange,lightPierce; string character=CharacterProgression.StarterId; GameObject activeStageVisual; bool aiming,ending,gameOver,turnFired,stageCleared,stageClearPending,skippingTurn,bossActive,bossQueued,finalBossActive,stageTransitioning; [SerializeField] bool drawPlayerDamageDebug; int activeProjectiles; TurnState state, pausedState;
         float nyxDamageBonus,nyxRicochetBonus,nyxCriticalBonus;int nyxExtraBalls,nyxGemBonus;Coroutine gachaRoutine;
         string SavePath => Path.Combine(Application.persistentDataPath,"reflectable_run.json");
@@ -79,6 +81,23 @@ namespace Reflectable
             DrawPreview(direction);
             if (mouse.leftButton.wasPressedThisFrame && !PointerOverUI())
                 StartCoroutine(Fire(direction));
+        }
+
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus) CancelActiveAim();
+        }
+
+        void OnApplicationPause(bool paused)
+        {
+            if (paused) CancelActiveAim();
+        }
+
+        void OnDisable() => CancelActiveAim();
+
+        void CancelActiveAim()
+        {
+            activeAimFingerId = -1;
         }
 
         Vector2 AimDirectionFromScreen(Vector2 screenPosition)
@@ -182,16 +201,36 @@ namespace Reflectable
         void CacheAndFitTiledStageBackgrounds(GameObject stageRoot)
         {
             tiledBackdropSizes.Clear();
+            stageBackdropCover = default;
             if (!stageRoot) return;
+            float largestBackdropArea = 0f;
             foreach (var renderer in stageRoot.GetComponentsInChildren<SpriteRenderer>(true))
-                if (renderer && renderer.drawMode == SpriteDrawMode.Tiled)
+            {
+                if (!renderer) continue;
+                if (renderer.drawMode == SpriteDrawMode.Tiled)
                     tiledBackdropSizes.Add(new TiledBackdropSize { renderer = renderer, size = renderer.size });
+                else if (renderer.drawMode == SpriteDrawMode.Simple && renderer.sprite)
+                {
+                    Vector2 worldSize = renderer.bounds.size;
+                    float area = worldSize.x * worldSize.y;
+                    if (worldSize.x >= 12f && worldSize.y >= 8f && area > largestBackdropArea)
+                    {
+                        largestBackdropArea = area;
+                        stageBackdropCover = new StageBackdropCover
+                        {
+                            renderer = renderer,
+                            localScale = renderer.transform.localScale,
+                            worldSize = worldSize
+                        };
+                    }
+                }
+            }
             FitTiledStageBackgrounds();
         }
 
         void FitTiledStageBackgrounds()
         {
-            if (!gameCamera || tiledBackdropSizes.Count == 0) return;
+            if (!gameCamera || (tiledBackdropSizes.Count == 0 && !stageBackdropCover.renderer)) return;
             float visibleWidth = Mathf.Max(designCameraSize, gameCamera.orthographicSize) * 2f * gameCamera.aspect + horizontalViewportMargin * 2f;
             foreach (var backdrop in tiledBackdropSizes)
             {
@@ -200,6 +239,22 @@ namespace Reflectable
                 float neededLocalWidth = visibleWidth / scaleX;
                 backdrop.renderer.size = new Vector2(Mathf.Max(backdrop.size.x, neededLocalWidth), backdrop.size.y);
             }
+
+            FitSimpleStageBackdropCover();
+        }
+
+        void FitSimpleStageBackdropCover()
+        {
+            if (!gameCamera || !stageBackdropCover.renderer || stageBackdropCover.worldSize.x <= 0f || stageBackdropCover.worldSize.y <= 0f)
+                return;
+
+            float visibleHeight = gameCamera.orthographicSize * 2f;
+            float visibleWidth = visibleHeight * gameCamera.aspect + horizontalViewportMargin * 2f;
+            float coverScale = Mathf.Max(
+                1f,
+                visibleWidth / stageBackdropCover.worldSize.x,
+                visibleHeight / stageBackdropCover.worldSize.y);
+            stageBackdropCover.renderer.transform.localScale = stageBackdropCover.localScale * coverScale;
         }
         bool GameplayInputEnabled=>state==TurnState.Aiming&&aiming&&Time.timeScale>0&&!AnyModalOpen();
         bool CanSkipTurn=>(state==TurnState.Aiming||state==TurnState.Firing)&&!skippingTurn&&!stageTransitioning&&!gameOver&&Time.timeScale>0&&!AnyModalOpen();

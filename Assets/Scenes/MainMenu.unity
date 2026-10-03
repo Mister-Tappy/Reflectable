@@ -2159,6 +2159,7 @@ GameObject:
   - component: {fileID: 755910907}
   - component: {fileID: 755910906}
   - component: {fileID: 755910910}
+  - component: {fileID: 755910911}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -2166,6 +2167,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &755910911
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 755910905}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e5a7989dc4e47c19013064bbd715963, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Reflectable.HudLayoutController
+  safeAreaRoot: {fileID: 755910909}
+  referenceResolution: {x: 1920, y: 1080}
 --- !u!114 &755910906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4879,7 +4894,7 @@ Camera:
   m_GameObject: {fileID: 1814147831}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 2
   m_BackGroundColor: {r: 1, g: 0.961, b: 0.914, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2

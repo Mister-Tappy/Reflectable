@@ -52,7 +52,10 @@ namespace Reflectable
             musicSource.loop = true;
             musicSource.spatialBlend = sfxSource.spatialBlend = 0f;
             AudioListener.volume = MasterVolume;
-            Screen.fullScreen = Fullscreen;
+            // WebGL fullscreen requires a user gesture. The settings button is
+            // the explicit request point; do not try to enter it during startup.
+            if (Application.platform != RuntimePlatform.WebGLPlayer)
+                Screen.fullScreen = Fullscreen;
             int qualityIndex = Mathf.Clamp(PlayerPrefs.GetInt(QualityKey, QualitySettings.GetQualityLevel()), 0, Mathf.Max(0, QualitySettings.names.Length - 1));
             QualitySettings.SetQualityLevel(qualityIndex, true);
             impactClip = CreateClip("Mockup_Impact", .16f, false, (t,d) =>
@@ -170,7 +173,9 @@ namespace Reflectable
         public static void SetScreenShakeIntensity(float value){PlayerPrefs.SetFloat(ShakeKey,Mathf.Clamp01(value));PlayerPrefs.Save();}
         public static void SetMasterVolume(float value){PlayerPrefs.SetFloat(MasterKey,Mathf.Clamp01(value));PlayerPrefs.Save();AudioListener.volume=MasterVolume;}
         public static void SetCameraSensitivity(float value){PlayerPrefs.SetFloat(SensitivityKey,Mathf.Clamp01(value));PlayerPrefs.Save();}
-        public static bool Fullscreen => PlayerPrefs.GetInt(FullscreenKey,Screen.fullScreen?1:0)==1;
+        public static bool Fullscreen => Application.platform == RuntimePlatform.WebGLPlayer
+            ? Screen.fullScreen
+            : PlayerPrefs.GetInt(FullscreenKey,Screen.fullScreen?1:0)==1;
         public static void SetFullscreen(bool value){PlayerPrefs.SetInt(FullscreenKey,value?1:0);PlayerPrefs.Save();Screen.fullScreen=value;}
         public static int GraphicsQualityIndex => Mathf.Clamp(PlayerPrefs.GetInt(QualityKey,QualitySettings.GetQualityLevel()),0,Mathf.Max(0,QualitySettings.names.Length-1));
         public static void SetGraphicsQuality(int value){if(QualitySettings.names.Length==0)return;int index=Mathf.Clamp(value,0,QualitySettings.names.Length-1);PlayerPrefs.SetInt(QualityKey,index);PlayerPrefs.Save();QualitySettings.SetQualityLevel(index,true);}
@@ -260,6 +265,7 @@ namespace Reflectable
                 if(menu)menu.ReturnFromSettings();
                 else {gameObject.SetActive(false);if(mainPanel)mainPanel.SetActive(true);}
             },220,"DoneButton");
+            SetResolutionControlsVisible(card.transform);
         }
 
         void BindExistingCard(Transform card)
@@ -274,6 +280,7 @@ namespace Reflectable
                     ApplyResolution(i);
                 },
                 value=>{var r=Resolutions[Mathf.Clamp(Mathf.RoundToInt(value),0,Resolutions.Length-1)];return r.x+" × "+r.y;});
+            SetResolutionControlsVisible(card);
             BindSlider(card,"MASTERVOLUMESlider","MASTERVOLUMEValue",MenuSettingsAudioMockup.MasterVolume,0,1,false,
                 MenuSettingsAudioMockup.SetMasterVolume,v=>Mathf.RoundToInt(v*100)+"%");
             BindSlider(card,"MUSICVOLUMESlider","MUSICVOLUMEValue",MenuSettingsAudioMockup.MusicVolume,0,1,false,
@@ -344,8 +351,32 @@ namespace Reflectable
 
         static void ApplyResolution(int index)
         {
+            if (Application.platform == RuntimePlatform.WebGLPlayer) return;
             var resolution=Resolutions[Mathf.Clamp(index,0,Resolutions.Length-1)];
             Screen.SetResolution(resolution.x,resolution.y,Screen.fullScreenMode);
+        }
+
+        static void SetResolutionControlsVisible(Transform card)
+        {
+            if (Application.platform != RuntimePlatform.WebGLPlayer || !card) return;
+            string[] names = { "DISPLAYRESOLUTIONTitle", "DISPLAYRESOLUTIONValue", "DISPLAYRESOLUTIONSlider" };
+            foreach (string name in names)
+            {
+                var control = card.Find(name);
+                if (control) control.gameObject.SetActive(false);
+            }
+
+            // Reclaim the row used by fixed desktop resolutions so the WebGL
+            // settings card keeps its compact spacing.
+            var masterSlider = card.Find("MASTERVOLUMESlider") as RectTransform;
+            if (!masterSlider || masterSlider.anchoredPosition.y >= 250f) return;
+
+            foreach (Transform child in card)
+            {
+                var rect = child as RectTransform;
+                if (rect && rect.anchoredPosition.y < 250f)
+                    rect.anchoredPosition += Vector2.up * 82f;
+            }
         }
 
         static void AddSlider(Transform parent,Font font,string title,Vector2 position,float value,float min,float max,bool whole,Action<float> changed,Func<float,string> format)
