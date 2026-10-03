@@ -44,7 +44,7 @@ namespace Reflectable
         [Min(0.01f)] public float gachaWeight = 1f;
 
         public int Stars => (int)rarity;
-        public string RarityLabel => new string('★', Stars) + " " + rarity.ToString().ToUpperInvariant();
+        public string RarityLabel => rarity.ToString().ToUpperInvariant();
         public Sprite CutInSprite => fullBodyCutIn ? fullBodyCutIn : frontSprite ? frontSprite : portrait;
         public string CutInAbilityName => string.IsNullOrWhiteSpace(cutInAbilityName) ? title : cutInAbilityName;
     }
