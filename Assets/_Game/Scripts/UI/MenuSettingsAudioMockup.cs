@@ -15,6 +15,7 @@ namespace Reflectable
         const string SensitivityKey = "Reflectable.MenuCameraSensitivity";
         const string FullscreenKey = "Reflectable.Fullscreen";
         const string QualityKey = "Reflectable.GraphicsQuality";
+        const string PortraitKey = "Reflectable.HidePortrait";
         static MenuSettingsAudioMockup instance;
         AudioSource musicSource;
         AudioSource sfxSource;
@@ -177,6 +178,11 @@ namespace Reflectable
             ? Screen.fullScreen
             : PlayerPrefs.GetInt(FullscreenKey,Screen.fullScreen?1:0)==1;
         public static void SetFullscreen(bool value){PlayerPrefs.SetInt(FullscreenKey,value?1:0);PlayerPrefs.Save();Screen.fullScreen=value;}
+        public static bool HidePortrait => PlayerPrefs.GetInt(PortraitKey,0)==1;
+        public static void SetHidePortrait(bool value)
+        {
+            PlayerPrefs.SetInt(PortraitKey,value?1:0);PlayerPrefs.Save();
+        }
         public static int GraphicsQualityIndex => Mathf.Clamp(PlayerPrefs.GetInt(QualityKey,QualitySettings.GetQualityLevel()),0,Mathf.Max(0,QualitySettings.names.Length-1));
         public static void SetGraphicsQuality(int value){if(QualitySettings.names.Length==0)return;int index=Mathf.Clamp(value,0,QualitySettings.names.Length-1);PlayerPrefs.SetInt(QualityKey,index);PlayerPrefs.Save();QualitySettings.SetQualityLevel(index,true);}
 
@@ -304,6 +310,13 @@ namespace Reflectable
                 MenuSettingsAudioMockup.SetGraphicsQuality((MenuSettingsAudioMockup.GraphicsQualityIndex+1)%count);
                 SetButtonLabel(button,"QUALITY: "+CurrentQualityName());
             });
+            BindButton(card,"PortraitButton",button=>
+            {
+                MenuSettingsAudioMockup.SetHidePortrait(!MenuSettingsAudioMockup.HidePortrait);
+                SetButtonLabel(button,PortraitButtonLabel());
+            });
+            var portraitButton=card.Find("PortraitButton")?.GetComponent<Button>();
+            if(portraitButton)SetButtonLabel(portraitButton,PortraitButtonLabel());
             BindButton(card,"DoneButton",_=>
             {
                 var game=FindFirstObjectByType<ReflectableGameController>();
@@ -348,6 +361,7 @@ namespace Reflectable
         }
 
         static string CurrentQualityName(){var names=QualitySettings.names;return names.Length==0?"DEFAULT":names[MenuSettingsAudioMockup.GraphicsQualityIndex];}
+        static string PortraitButtonLabel()=>"HIDE PORTRAIT: "+(MenuSettingsAudioMockup.HidePortrait?"ON":"OFF");
 
         static void ApplyResolution(int index)
         {

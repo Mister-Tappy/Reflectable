@@ -43,6 +43,7 @@ namespace Reflectable
         Image portraitSlotImage;
         GameObject portraitInstance;
         GameObject portraitInstancePrefab;
+        bool portraitHidden;
         Coroutine progressPulse;
         Coroutine portraitPulse;
 
@@ -56,10 +57,18 @@ namespace Reflectable
         void Awake()
         {
             portraitSlotImage = portrait;
+            portraitHidden = MenuSettingsAudioMockup.HidePortrait;
+            ApplyPortraitVisibility();
         }
 
         void Update()
         {
+            bool hidePortrait = MenuSettingsAudioMockup.HidePortrait;
+            if (portraitHidden != hidePortrait)
+            {
+                portraitHidden = hidePortrait;
+                ApplyPortraitVisibility();
+            }
             displayedProgress = Mathf.Lerp(displayedProgress, targetProgress, 1f - Mathf.Exp(-Time.unscaledDeltaTime * 9f));
             if (stageProgressFill) stageProgressFill.fillAmount = displayedProgress;
         }
@@ -127,6 +136,16 @@ namespace Reflectable
             portraitInstance = instance;
             portraitInstancePrefab = desiredPrefab;
             portrait = image;
+            ApplyPortraitVisibility();
+        }
+
+        void ApplyPortraitVisibility()
+        {
+            bool visible = !portraitHidden;
+            if (portraitSlotImage) portraitSlotImage.enabled = visible && portrait == portraitSlotImage;
+            if (portrait) portrait.enabled = visible;
+            if (portraitGlow) portraitGlow.enabled = visible;
+            if (portraitInstance) portraitInstance.SetActive(visible);
         }
 
         static bool UsesBuiltinPlaceholder(Sprite sprite) =>
